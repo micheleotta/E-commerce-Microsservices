@@ -3,6 +3,8 @@ from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 
+from produtos import *
+
 # Definir tipos de eventos
 pedido = Enum('pedido', ['criado', 'enviado', 'estoque_ok', 'excluido'])
 estoque = Enum('estoque', ['indisponivel'])
