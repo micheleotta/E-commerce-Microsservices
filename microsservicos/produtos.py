@@ -10,6 +10,9 @@ class Produto:
         self.desconto = desconto
         
         Produto.prox_id += 1
+        
+    def get_nome(self):
+        return self.nome
     
     def get_categoria(self):
         return self.categoria

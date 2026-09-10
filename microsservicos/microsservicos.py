@@ -20,7 +20,7 @@ def publish_event(publisher, channel, event, conteudo):
     assinatura = pkcs1_15.new(key).sign(hash)
     
     # incluir a assinatura digital no campo Signature do envelope do evento.
-    channel.basic_publish(exchange="",
+    channel.basic_publish(exchange='direct_logs',
         routing_key=event,
         body=conteudo,
         signature=assinatura)
