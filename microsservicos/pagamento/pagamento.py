@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import pika
 import random
-from microsservicos.microsservicos import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from microsservicos import pedido, pagamento, publish_event, receive_event
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -9,24 +12,24 @@ channel = connection.channel()
 
 # tipo Direct
 channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
-
-result = channel.queue_declare(queue='', exclusive=True)
+result = channel.queue_declare(queue='pagamento', exclusive=True)
 queue_name = result.method.queue
 
 # consome o evento pedido.estoque_ok
 channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pedido.estoque_ok)
 
 def callback(ch, method, properties, body):
-    print(f" [x] {method.routing_key}:{body}")
+    # if(receive_event(publisher, conteudo, assinatura)):
     
     # processamento do pagamento por variáveis aleatórias
     aprovado = random.randint() % 2 == 0
+    conteudo = ""
     if(aprovado):
         # publicar um evento pagamento.aprovado
-        publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo="")
+        publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo=conteudo)
     else:
         # publicar um evento pagamento.recusado
-        publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo="")
+        publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo=conteudo)
 
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)

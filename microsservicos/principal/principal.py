@@ -39,6 +39,7 @@ for evento in eventos:
 
 def callback(ch, method, properties, body):
     receive_event()
+    print(f" [x] {method.routing_key}:{body}")
     
     # atualizar o status dos respectivos pedidos
     
