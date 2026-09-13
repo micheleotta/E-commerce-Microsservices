@@ -19,21 +19,29 @@ queue_name = result.method.queue
 channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pedido.estoque_ok)
 
 def callback(ch, method, properties, body):
-    # if(receive_event(publisher, conteudo, assinatura)):
+    valida, conteudo = receive_event(method, properties, body)
+    evento = method.routing_key
     
-    # processamento do pagamento por variáveis aleatórias
-    aprovado = random.randint() % 2 == 0
-    conteudo = ""
-    if(aprovado):
-        # publicar um evento pagamento.aprovado
-        publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo=conteudo)
+    # processar evento somente se assinatura for válida!
+    if valida:
+        pedido_id = conteudo['pedido_id']
+        # processamento do pagamento por variáveis aleatórias
+        aprovado = random.randint(1,101) % 2 == 0
+        if(aprovado):
+            # publicar um evento pagamento.aprovado
+            publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo=conteudo)
+            print(f"\nPedido {pedido_id} -> pagamento aprovado!")
+        else:
+            # publicar um evento pagamento.recusado
+            publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo=conteudo)
+            print(f"\nPedido {pedido_id} -> pagamento recusado")
     else:
-        # publicar um evento pagamento.recusado
-        publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo=conteudo)
+        print(f"Assinatura inválida, evento {evento} descartado!")
 
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
+    print("Microsserviço de pagamento iniciado!")
     channel.start_consuming()
 except KeyboardInterrupt:
     channel.stop_consuming()
