@@ -22,13 +22,19 @@ class Produto:
     
     def set_desconto(self, desconto):
         self.desconto = desconto
-        
+    
+    def get_estoque(self):
+        return self.estoque
+    
     def verificar_estoque(self, qtd = 1):
         return self.estoque >= qtd
 
     def retirar_estoque(self, qtd = 1):
         if self.verificar_estoque(qtd):
             self.estoque -= qtd
+    
+    def devolver_estoque(self, qtd):
+        self.estoque += qtd
     
     def get_preco(self):
         return self.preco * (1 - self.desconto)

@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
@@ -7,9 +7,9 @@ import pika
 from produtos import *
 
 # Definir tipos de eventos
-pedido = Enum('pedido', ['criado', 'enviado', 'estoque_ok', 'excluido'])
-estoque = Enum('estoque', ['indisponivel'])
-pagamento = Enum('pagamento', ['aprovado', 'recusado'])
+pedido = StrEnum('pedido', ['criado', 'enviado', 'estoque_ok', 'excluido'])
+estoque = StrEnum('estoque', ['indisponivel'])
+pagamento = StrEnum('pagamento', ['aprovado', 'recusado'])
 
 # Publicar um evento
 def publish_event(publisher, channel, event, conteudo):
@@ -30,7 +30,7 @@ def publish_event(publisher, channel, event, conteudo):
 
 # Verificar recebimento de evento
 def receive_event(method, properties, conteudo):
-    assinatura = method.signature
+    # assinatura = method.signature
     headers = properties.headers or {}
     publisher = headers.get('publisher')
     # obter chave publica do microsserviço produtor

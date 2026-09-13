@@ -92,7 +92,7 @@ def interacao():
                 with pedidos_lock:
                     pedidos[pedido_id] = novo_pedido
                 
-                publish_event('principal', channel, f'{pedido.criado}', novo_pedido)
+                publish_event(publisher='principal', channel=channel, event=pedido.criado, conteudo=novo_pedido)
                 print(f"\nPedido {pedido_id} criado!")
 
             case 3:
@@ -110,7 +110,7 @@ def interacao():
                 with pedidos_lock:
                     pedidos[pedido_id]["status"] = "excluído"
                 
-                publish_event('principal', channel, f'{pedido.excluido}', pedidos[pedido_id])
+                publish_event(publisher='principal', channel=channel, event=pedido.excluido, conteudo=pedidos[pedido_id])
                 print(f"\nPedido {pedido_id} excluído!")
                 
             case 4:
@@ -149,13 +149,18 @@ def callback(ch, method, properties, body):
                 status = "estoque ok"
             # produto não disponível em estoque ou pagamento recusado -> pedido.excluido
             elif evento == estoque.indisponivel or evento == pagamento.recusado:
-                status = "excluído"
-                publish_event('principal', ch, f'{pedido.excluido}', pedidos[pedido_id])
+                motivos = {
+                    estoque.indisponivel: "estoque indisponível",
+                    pagamento.recusado: "pagamento recusado"
+                }
+                status = f"excluído - {motivos[evento]}"
+                pedidos[pedido_id]["status"] = status
+                publish_event(publisher='principal', channel=ch, event=pedido.excluido, conteudo=pedidos[pedido_id])
             pedidos[pedido_id]["status"] = status
             
-        print(f"Pedido {pedido_id} atualizado -> Status: {status}")
+        print(f"\nPedido {pedido_id} atualizado -> Status: {status}")
     else:
-        print(f"Assinatura inválida, evento {evento} descartado!")
+        print(f"\nAssinatura inválida, evento {evento} descartado!")
 
 
 def consume():
