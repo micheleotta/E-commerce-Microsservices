@@ -15,10 +15,14 @@ prox_id = 1
 def interacao():
     global prox_id, produtos
     
-    # conexão separada para a interação
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host="localhost"))
-    channel = connection.channel()
-    channel.exchange_declare(exchange="direct_logs", exchange_type="direct")
+    def publicar_interacao(event, conteudo):
+        # conexão separada para a interação
+        # evitar bloqueio de conexão por demora na interação
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host="localhost"))
+        channel = connection.channel()
+        channel.exchange_declare(exchange="direct_logs", exchange_type="direct")
+        publish_event(publisher="principal", channel=channel, event=event, conteudo=conteudo)
+        connection.close()
     
     while True:
         print("\n========================")
@@ -92,7 +96,7 @@ def interacao():
                 with pedidos_lock:
                     pedidos[pedido_id] = novo_pedido
                 
-                publish_event(publisher='principal', channel=channel, event=pedido.criado, conteudo=novo_pedido)
+                publicar_interacao(event=pedido.criado, conteudo=novo_pedido)
                 print(f"\nPedido {pedido_id} criado!")
 
             case 3:
@@ -110,9 +114,9 @@ def interacao():
                 with pedidos_lock:
                     pedidos[pedido_id]["status"] = "excluído"
                 
-                publish_event(publisher='principal', channel=channel, event=pedido.excluido, conteudo=pedidos[pedido_id])
+                publicar_interacao(event=pedido.excluido, conteudo=pedidos[pedido_id])
                 print(f"\nPedido {pedido_id} excluído!")
-                
+            
             case 4:
                 print("\n=== Status de pedidos ===")
                 with pedidos_lock:
@@ -126,7 +130,6 @@ def interacao():
                             print(f"  - {p['nome']} ({p['quantidade']})")
             case 5:
                 print("Encerrando...")
-                connection.close()
                 break
             case _:
                 print("Opção inválida")

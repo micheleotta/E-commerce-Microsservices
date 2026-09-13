@@ -30,7 +30,6 @@ def callback(ch, method, properties, body):
         # se pedido.criado -> verificar disponibilidade
         pedido_id = conteudo['pedido_id']
         if evento == pedido.criado:
-            resposta = {"pedido_id": pedido_id}
             for produto_pedido in conteudo['produtos']:
                 nome = produto_pedido['nome']
                 quantidade = produto_pedido['quantidade']
@@ -38,7 +37,7 @@ def callback(ch, method, properties, body):
                 prod = next((p for p in produtos if p.nome == nome), None)
                 if not prod.verificar_estoque(quantidade):
                     # se produto não disponível -> estoque.indisponivel
-                    publish_event(publisher="estoque", channel=channel, event=estoque.indisponivel, conteudo=resposta)
+                    publish_event(publisher="estoque", channel=ch, event=estoque.indisponivel, conteudo=conteudo)
                     print(f"\nPedido {pedido_id} criado -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {prod.get_estoque()})")
                     return
             
@@ -53,12 +52,12 @@ def callback(ch, method, properties, body):
                 antes = prod.get_estoque()
                 prod.retirar_estoque(quantidade)
                 print(f"- {nome} = {antes} -> {prod.get_estoque()}")
-            publish_event(publisher="estoque", channel=channel, event=pedido.estoque_ok, conteudo=resposta)
+            publish_event(publisher="estoque", channel=ch, event=pedido.estoque_ok, conteudo=conteudo)
         
         # se pedido.excluido -> devolver ao estoque produtos reservados
         elif evento == pedido.excluido:
             # se excluido por estoque indisponivel, não realizou reserva dos produtos
-            if conteudo["status"] == "excluído - pagamento recusado":
+            if not conteudo["status"] == "excluído - estoque indisponível":
                 print(f"\nPedido excluido {pedido_id} -> estoque devolvido")
                 for produto_reservado in conteudo['produtos']:
                     nome = produto_reservado['nome']

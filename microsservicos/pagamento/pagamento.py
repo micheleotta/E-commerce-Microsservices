@@ -29,11 +29,11 @@ def callback(ch, method, properties, body):
         aprovado = random.randint(1,101) % 2 == 0
         if(aprovado):
             # publicar um evento pagamento.aprovado
-            publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo=conteudo)
+            publish_event(publisher="pagamento", channel=ch, event=pagamento.aprovado, conteudo=conteudo)
             print(f"\nPedido {pedido_id} -> pagamento aprovado!")
         else:
             # publicar um evento pagamento.recusado
-            publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo=conteudo)
+            publish_event(publisher="pagamento", channel=ch, event=pagamento.recusado, conteudo=conteudo)
             print(f"\nPedido {pedido_id} -> pagamento recusado")
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
