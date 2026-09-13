@@ -10,6 +10,9 @@ class Produto:
         self.desconto = desconto
         
         Produto.prox_id += 1
+    
+    def get_id(self):
+        return self.id
         
     def get_nome(self):
         return self.nome
@@ -27,7 +30,7 @@ class Produto:
         if self.verificar_estoque(qtd):
             self.estoque -= qtd
     
-    def calcular_preco(self):
+    def get_preco(self):
         return self.preco * (1 - self.desconto)
 
 categorias = ['doce', 'salgado', 'pao']
