@@ -28,7 +28,6 @@ while True:
         "categoria": categoria,
         "desconto": desconto
     }
-    produto.set_desconto(desconto/100)
     # channel publish
     channel.basic_publish(exchange='topic_logs', routing_key=f"promocao.categoria.{categoria}", body=json.dumps(conteudo))
     print(f"[promocao.categoria.{categoria}] Desconto {desconto}% em {nome}")

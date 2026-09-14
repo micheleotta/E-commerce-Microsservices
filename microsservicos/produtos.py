@@ -1,13 +1,11 @@
 class Produto:
     prox_id = 1
     
-    def __init__(self, nome, categoria, preco, estoque, desconto = 0):
+    def __init__(self, nome, categoria, preco):
         self.id = Produto.prox_id
         self.nome = nome
         self.categoria = categoria
         self.preco = preco
-        self.estoque = estoque
-        self.desconto = desconto
         
         Produto.prox_id += 1
     
@@ -20,31 +18,15 @@ class Produto:
     def get_categoria(self):
         return self.categoria
     
-    def set_desconto(self, desconto):
-        self.desconto = desconto
-    
-    def get_estoque(self):
-        return self.estoque
-    
-    def verificar_estoque(self, qtd = 1):
-        return self.estoque >= qtd
-
-    def retirar_estoque(self, qtd = 1):
-        if self.verificar_estoque(qtd):
-            self.estoque -= qtd
-    
-    def devolver_estoque(self, qtd):
-        self.estoque += qtd
-    
     def get_preco(self):
-        return self.preco * (1 - self.desconto)
+        return self.preco
 
 categorias = ['doce', 'salgado', 'pao']
 
 produtos = [
-    Produto('Donut', 'doce', 12.0, 5),
-    Produto('Carolina', 'doce', 5.0, 50),
-    Produto('Coxinha', 'salgado', 2.0, 20),
-    Produto('Croissant', 'pao', 20.0, 10),
-    Produto('Bisnaguinha', 'pao', 30.0, 10)
+    Produto('Carolina', 'doce', 5.0),
+    Produto('Donut', 'doce', 12.0),
+    Produto('Coxinha', 'salgado', 2.0),
+    Produto('Bisnaguinha', 'pao', 30.0),
+    Produto('Croissant', 'pao', 20.0)
 ]

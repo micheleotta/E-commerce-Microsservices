@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
-from microsservicos import pagamento, pedido, estoque, receive_event, publish_event
+from microsservicos import pedido, estoque, receive_event, publish_event
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -21,6 +21,9 @@ for evento in eventos:
     # subscribing, novo binding para cada evento de interesse
     channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=f'{evento}')
 
+quantidades_estoque = [5, 50, 20, 10, 10]
+estoque_produtos = {produto.get_nome(): quantidade for produto, quantidade in zip(produtos, quantidades_estoque)}
+
 def callback(ch, method, properties, body):
     valida, conteudo = receive_event(method, properties, body)
     evento = method.routing_key
@@ -34,11 +37,10 @@ def callback(ch, method, properties, body):
                 nome = produto_pedido['nome']
                 quantidade = produto_pedido['quantidade']
                 
-                prod = next((p for p in produtos if p.nome == nome), None)
-                if not prod.verificar_estoque(quantidade):
+                if estoque_produtos[nome] < quantidade:
                     # se produto não disponível -> estoque.indisponivel
                     publish_event(publisher="estoque", channel=ch, event=estoque.indisponivel, conteudo=conteudo)
-                    print(f"\nPedido {pedido_id} criado -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {prod.get_estoque()})")
+                    print(f"\nPedido {pedido_id} criado -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {estoque_produtos[nome]})")
                     return
             
             # caso todos os produtos estejam disponíveis
@@ -48,24 +50,22 @@ def callback(ch, method, properties, body):
                 nome = produto_pedido['nome']
                 quantidade = produto_pedido['quantidade']
                 
-                prod = next((p for p in produtos if p.nome == nome), None)
-                antes = prod.get_estoque()
-                prod.retirar_estoque(quantidade)
-                print(f"- {nome} = {antes} -> {prod.get_estoque()}")
+                antes = estoque_produtos[nome]
+                estoque_produtos[nome] -= quantidade
+                print(f"- {nome} = {antes} -> {estoque_produtos[nome]}")
             publish_event(publisher="estoque", channel=ch, event=pedido.estoque_ok, conteudo=conteudo)
         
         # se pedido.excluido -> devolver ao estoque produtos reservados
         elif evento == pedido.excluido:
             # se excluido por estoque indisponivel, não realizou reserva dos produtos
-            if not conteudo["status"] == "excluído - estoque indisponível":
+            if conteudo["status"] != "excluído - estoque indisponível":
                 print(f"\nPedido excluido {pedido_id} -> estoque devolvido")
                 for produto_reservado in conteudo['produtos']:
                     nome = produto_reservado['nome']
                     quantidade = produto_reservado['quantidade']
-                    prod = next((p for p in produtos if p.nome == nome), None)
-                    antes = prod.get_estoque()
-                    prod.devolver_estoque(quantidade)
-                    print(f"- {nome} = {antes} -> {prod.get_estoque()}")
+                    antes = estoque_produtos[nome]
+                    estoque_produtos[nome] += quantidade
+                    print(f"- {nome} = {antes} -> {estoque_produtos[nome]}")
 
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")

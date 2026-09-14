@@ -112,6 +112,9 @@ def interacao():
                     continue
                 
                 with pedidos_lock:
+                    if "excluído" in pedidos[pedido_id]["status"]:
+                        print(f"\nPedido {pedido_id} já excluído!")
+                        continue
                     pedidos[pedido_id]["status"] = "excluído"
                 
                 publicar_interacao(event=pedido.excluido, conteudo=pedidos[pedido_id])
