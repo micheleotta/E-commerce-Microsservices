@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
-from microsservicos import pedido, estoque, receive_event, publish_event
+from microsservicos import pedido, estoque, receive_event, publish_event, gerar_chaves
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -72,6 +72,7 @@ def callback(ch, method, properties, body):
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
+    gerar_chaves("estoque")
     print("Microsserviço de estoque iniciado!")
     channel.start_consuming()
 except KeyboardInterrupt:

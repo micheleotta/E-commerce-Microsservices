@@ -4,7 +4,7 @@ import sys
 import os
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from microsservicos import pedido, pagamento, publish_event, receive_event
+from microsservicos import pedido, pagamento, publish_event, receive_event, gerar_chaves
 
 def emitir_nota(conteudo):
     total = 0
@@ -73,6 +73,7 @@ def callback(ch, method, properties, body):
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
+    gerar_chaves("entrega")
     print("Microsserviço de entrega iniciado!")
     channel.start_consuming()
 except KeyboardInterrupt:

@@ -4,7 +4,7 @@ import random
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from microsservicos import pedido, pagamento, publish_event, receive_event
+from microsservicos import pedido, pagamento, publish_event, receive_event, gerar_chaves
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -41,6 +41,7 @@ def callback(ch, method, properties, body):
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
+    gerar_chaves("pagamento")
     print("Microsserviço de pagamento iniciado!")
     channel.start_consuming()
 except KeyboardInterrupt:

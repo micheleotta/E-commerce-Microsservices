@@ -5,11 +5,13 @@ import os
 import threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
-from microsservicos import pagamento, pedido, estoque, receive_event, publish_event
+from microsservicos import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
 
 pedidos = {}
 pedidos_lock = threading.Lock()
 prox_id = 1
+
+gerar_chaves("principal")
 
 # função de interação com o usuário
 def interacao():
