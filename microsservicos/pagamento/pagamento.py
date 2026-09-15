@@ -4,7 +4,7 @@ import random
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from microsservicos import pedido, pagamento, publish_event, receive_event, gerar_chaves
+from shared import pedido, pagamento, publish_event, receive_event, gerar_chaves
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -18,14 +18,15 @@ queue_name = result.method.queue
 # consome o evento pedido.estoque_ok
 channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pedido.estoque_ok)
 
+
 def callback(ch, method, properties, body):
-    valida, conteudo = receive_event(method, properties, body)
+    valida, conteudo = receive_event(consumer="pagamento", properties=properties, conteudo=body)
     evento = method.routing_key
     
     # processar evento somente se assinatura for válida!
     if valida:
         pedido_id = conteudo['pedido_id']
-        # processamento do pagamento por variáveis aleatórias
+        # processamento do pagamento simulado por variáveis aleatórias
         aprovado = random.randint(1,101) % 2 == 0
         if(aprovado):
             # publicar um evento pagamento.aprovado

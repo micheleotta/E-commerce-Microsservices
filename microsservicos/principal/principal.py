@@ -5,7 +5,7 @@ import os
 import threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
-from microsservicos import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
+from shared import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
 
 pedidos = {}
 pedidos_lock = threading.Lock()
@@ -13,7 +13,7 @@ prox_id = 1
 
 gerar_chaves("principal")
 
-# função de interação com o usuário
+# função de interação com o usuário pelo terminal
 def interacao():
     global prox_id, produtos
     
@@ -115,7 +115,7 @@ def interacao():
                 
                 with pedidos_lock:
                     if "excluído" in pedidos[pedido_id]["status"]:
-                        print(f"\nPedido {pedido_id} já excluído!")
+                        print(f"\nPedido {pedido_id} já está excluído!")
                         continue
                     pedidos[pedido_id]["status"] = "excluído"
                 
@@ -141,7 +141,7 @@ def interacao():
 
 
 def callback(ch, method, properties, body):
-    valida, conteudo = receive_event(method, properties, body)
+    valida, conteudo = receive_event(consumer="principal", properties=properties, conteudo=body)
     evento = method.routing_key
     
     # processar evento somente se assinatura for válida!
@@ -178,7 +178,6 @@ def consume():
 
     # tipo Direct
     channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
-
     result = channel.queue_declare(queue='principal', exclusive=True)
     queue_name = result.method.queue
 
@@ -186,7 +185,7 @@ def consume():
     eventos = [pagamento.aprovado, pagamento.recusado, pedido.enviado, pedido.estoque_ok, estoque.indisponivel]
     for evento in eventos:
         # subscribing, novo binding para cada evento de interesse
-        channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=f'{evento}')
+        channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
     
     channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     channel.start_consuming()

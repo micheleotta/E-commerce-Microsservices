@@ -31,7 +31,7 @@ def callback(ch, method, properties, body):
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
-    print("Consumidor C1 iniciado! Aguardando promoções...")
+    print("Consumidor C1 iniciado! Aguardando promoções...\n")
     channel.start_consuming()
 except KeyboardInterrupt:
     channel.stop_consuming()

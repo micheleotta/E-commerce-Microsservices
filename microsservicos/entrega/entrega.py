@@ -4,7 +4,7 @@ import sys
 import os
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from microsservicos import pedido, pagamento, publish_event, receive_event, gerar_chaves
+from shared import pedido, pagamento, publish_event, receive_event, gerar_chaves
 
 def emitir_nota(conteudo):
     total = 0
@@ -49,14 +49,15 @@ channel = connection.channel()
 
 # tipo Direct
 channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
-result = channel.queue_declare(queue='', exclusive=True)
+result = channel.queue_declare(queue='entrega', exclusive=True)
 queue_name = result.method.queue
 
 # consome o evento pagamento.aprovado
 channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pagamento.aprovado)
 
+
 def callback(ch, method, properties, body):
-    valida, conteudo = receive_event(method, properties, body)
+    valida, conteudo = receive_event(consumer="entrega", properties=properties, conteudo=body)
     evento = method.routing_key
     
     # processar evento somente se assinatura for válida!
@@ -70,6 +71,7 @@ def callback(ch, method, properties, body):
         print(f"\nPreparando entrega pedido {conteudo['pedido_id']} -> pedido enviado")
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
+
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:

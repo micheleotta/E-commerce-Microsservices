@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
-from microsservicos import pedido, estoque, receive_event, publish_event, gerar_chaves
+from shared import pedido, estoque, receive_event, publish_event, gerar_chaves
 
 # conectar
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -19,13 +19,15 @@ queue_name = result.method.queue
 eventos = [pedido.criado, pedido.excluido]
 for evento in eventos:
     # subscribing, novo binding para cada evento de interesse
-    channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=f'{evento}')
+    channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
 
+# definir estoque dos produtos
 quantidades_estoque = [5, 50, 20, 10, 10]
 estoque_produtos = {produto.get_nome(): quantidade for produto, quantidade in zip(produtos, quantidades_estoque)}
 
+
 def callback(ch, method, properties, body):
-    valida, conteudo = receive_event(method, properties, body)
+    valida, conteudo = receive_event(consumer="estoque", properties=properties, conteudo=body)
     evento = method.routing_key
     
     # processar evento somente se assinatura for válida!
@@ -40,7 +42,7 @@ def callback(ch, method, properties, body):
                 if estoque_produtos[nome] < quantidade:
                     # se produto não disponível -> estoque.indisponivel
                     publish_event(publisher="estoque", channel=ch, event=estoque.indisponivel, conteudo=conteudo)
-                    print(f"\nPedido {pedido_id} criado -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {estoque_produtos[nome]})")
+                    print(f"\nPedido criado {pedido_id} -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {estoque_produtos[nome]})")
                     return
             
             # caso todos os produtos estejam disponíveis
@@ -69,6 +71,7 @@ def callback(ch, method, properties, body):
 
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
+
 
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 try:
