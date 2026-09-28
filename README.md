@@ -4,11 +4,7 @@
 
 ## Dependências
 * Instalar o RabbitMQ
-* `pip install pika`
-* `pip install pycryptodome`
-* `pip install resend`
-* `pip install python-dotenv`
-
+* `pip install -r requirements.txt`
 
 ## Para rodar:
 * `docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management`
