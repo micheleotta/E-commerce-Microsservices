@@ -7,6 +7,7 @@
 * `pip install -r requirements.txt`
 
 ## Para rodar:
+* (Linux) `sudo systemctl start docker`
 * `docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management`
 * `python microsservicos/principal/principal.py`
 * `python microsservicos/estoque/estoque.py`
