@@ -3,9 +3,10 @@ import pika
 import sys
 import os
 import threading
+import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
-import bakery_bd as bd
+import estoque.bd.bakery_bd as bd # APAGAR DEPOIS
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -31,22 +32,18 @@ app.add_middleware(
 
 @app.get("/produtos")
 def listar_produtos():
-    """Retorna a lista de produtos cadastrados sem o objeto _links"""
-    produtos = bd.get_produtos()
-    produtos_list = [
-        {
-            "id_produto": produto[0],
-            "nome": produto[1],
-            "categoria": produto[2],
-            "preco": produto[3]
-        }
-        for produto in produtos
-    ]
-
-    return {
-        "total": len(produtos_list),
-        "produtos": produtos_list
-    }
+    """
+    Retorna a lista de produtos cadastrados sem o objeto _links
+    Consulta a lista de produtos diretamente do MS Estoque (via REST)
+    """
+    try:
+        response = requests.get("http://localhost:8001/produtos", timeout=5)
+        
+        response.raise_for_status()
+        return response.json()
+    
+    except requests.RequestException:
+        raise HTTPException(status_code=503, detail="Serviço de estoque indisponível")
 
 pedidos = {}
 pedidos_lock = threading.Lock()

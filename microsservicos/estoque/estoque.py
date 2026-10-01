@@ -2,24 +2,38 @@
 import pika
 import sys
 import os
+from fastapi import FastAPI
+import threading
+import uvicorn
+import bd.bakery_bd as bd # persiste os dados dos produtos em estoque
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import bakery_bd as bd
 from shared import pedido, estoque, receive_event, publish_event, gerar_chaves
 
-# conectar
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
 
-# tipo Direct
-channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
-result = channel.queue_declare(queue='estoque', exclusive=True)
-queue_name = result.method.queue
+def consume():
+    # conectar
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
 
-# eventos que consome
-eventos = [pedido.criado, pedido.excluido]
-for evento in eventos:
-    # subscribing, novo binding para cada evento de interesse
-    channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
+    # tipo Direct
+    channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
+    result = channel.queue_declare(queue='estoque', exclusive=True)
+    queue_name = result.method.queue
+
+    # eventos que consome
+    eventos = [pedido.criado, pedido.excluido]
+    for evento in eventos:
+        # subscribing, novo binding para cada evento de interesse
+        channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
+    
+    channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    try:
+        gerar_chaves("estoque")
+        print("Microsserviço de estoque iniciado!")
+        channel.start_consuming()
+    except KeyboardInterrupt:
+        channel.stop_consuming()
+
 
 def callback(ch, method, properties, body):
     valida, conteudo = receive_event(consumer="estoque", properties=properties, conteudo=body)
@@ -72,10 +86,29 @@ def callback(ch, method, properties, body):
         print(f"Assinatura inválida, evento {evento} descartado!")
 
 
-channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
-try:
-    gerar_chaves("estoque")
-    print("Microsserviço de estoque iniciado!")
-    channel.start_consuming()
-except KeyboardInterrupt:
-    channel.stop_consuming()
+# expõe um endpoint para o MS principal consultar produtos disponíveis!
+app = FastAPI(title="Microsserviço de Estoque")
+@app.get("/produtos")
+def consultar_produtos():
+    produtos = bd.get_produtos()
+
+    produtos_disponiveis = [
+        {
+            "id_produto": produto[0],
+            "nome": produto[1],
+            "categoria": produto[2],
+            "preco": produto[3],
+            "estoque": produto[4]
+        }
+        for produto in produtos
+    ]
+
+    return {
+        "total": len(produtos_disponiveis),
+        "produtos": produtos_disponiveis
+    }
+
+if __name__ == "__main__":
+    thread_rabbit = threading.Thread(target=consume, daemon=True)
+    thread_rabbit.start()
+    uvicorn.run(app, host="0.0.0.0", port=8001)
