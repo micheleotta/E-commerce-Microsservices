@@ -7,6 +7,46 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from produtos import produtos
 from shared import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
 
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Dict, Any
+
+app = FastAPI(title="API REST Tradicional (Sem HATEOAS)")
+
+# Habilita CORS para testes no Postman e Frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# O API Gateway deve disponibilizar endpoints REST para:
+# • (0,1) listar produtos disponíveis em estoque;
+# • (0,1) criar pedidos;
+# • (0,1) registrar interesse, informando o e-mail, em receber notificação sobre promoções de categorias;
+# • (0,1) cancelar interesse em receber e-mail sobre.
+
+@app.get("/produtos")
+def listar_produtos():
+    """Retorna a lista de produtos cadastrados sem o objeto _links"""
+    produtos_list = [
+        {
+            "id": produto.get_id(),
+            "nome": produto.get_nome(),
+            "categoria": produto.get_categoria(),
+            "preco": produto.get_preco()
+        }
+        for produto in produtos
+    ]
+
+    return {
+        "total": len(produtos_list),
+        "produtos": produtos_list
+    }
+
 pedidos = {}
 pedidos_lock = threading.Lock()
 prox_id = 1
@@ -190,7 +230,7 @@ def consume():
     channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     channel.start_consuming()
 
-
-thread_rabbit = threading.Thread(target=consume, daemon=True)
-thread_rabbit.start()
-interacao()
+if __name__ == "__main__":
+    thread_rabbit = threading.Thread(target=consume, daemon=True)
+    thread_rabbit.start()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
