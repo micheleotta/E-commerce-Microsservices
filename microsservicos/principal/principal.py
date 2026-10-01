@@ -6,7 +6,7 @@ import threading
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
-import estoque.bd.bakery_bd as bd # tirar depois
+import estoque.bd.bakery_bd as bd # APAGAR DEPOIS
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -32,7 +32,10 @@ app.add_middleware(
 
 @app.get("/produtos")
 def listar_produtos():
-    """Retorna a lista de produtos cadastrados sem o objeto _links"""
+    """
+    Retorna a lista de produtos cadastrados sem o objeto _links
+    Consulta a lista de produtos diretamente do MS Estoque (via REST)
+    """
     try:
         response = requests.get("http://localhost:8001/produtos", timeout=5)
         
