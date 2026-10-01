@@ -1,29 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-commerce</title>
+    <title>Bakery E-commerce</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <script src="/js/produtos.js"></script>
 </head>
+
 <body>
     <h1>Bem-vindo à Sylvanian Bakery</h1>
     <button onclick="getProdutos()">Buscar Produtos</button>
 </body>
-<script>
-    function getProdutos() {
-        var url = 'http://0.0.0.0:8000/produtos';
-        var headers = new Headers();
 
-        fetch(url, { method: 'GET', headers: headers })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                // Aqui você pode manipular os dados recebidos da API
-            })
-            .catch(error => {
-                console.error('Erro ao buscar produtos:', error);
-            });
-    }
-</script>
 </html>
