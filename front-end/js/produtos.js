@@ -1,5 +1,5 @@
 function getProdutos() {
-    var url = 'http://0.0.0.0:8000/produtos';
+    var url = 'http://localhost:8000/produtos';
     var headers = new Headers();
 
     fetch(url, { method: 'GET', headers: headers })

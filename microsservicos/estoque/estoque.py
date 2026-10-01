@@ -3,7 +3,7 @@ import pika
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from produtos import produtos
+import bakery_bd as bd
 from shared import pedido, estoque, receive_event, publish_event, gerar_chaves
 
 # conectar
@@ -21,11 +21,6 @@ for evento in eventos:
     # subscribing, novo binding para cada evento de interesse
     channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
 
-# definir estoque dos produtos
-quantidades_estoque = [5, 50, 20, 10, 10]
-estoque_produtos = {produto.get_nome(): quantidade for produto, quantidade in zip(produtos, quantidades_estoque)}
-
-
 def callback(ch, method, properties, body):
     valida, conteudo = receive_event(consumer="estoque", properties=properties, conteudo=body)
     evento = method.routing_key
@@ -36,25 +31,28 @@ def callback(ch, method, properties, body):
         pedido_id = conteudo['pedido_id']
         if evento == pedido.criado:
             for produto_pedido in conteudo['produtos']:
+                id_produto = produto_pedido['id_produto']
                 nome = produto_pedido['nome']
                 quantidade = produto_pedido['quantidade']
+                estoque_produto = bd.get_estoque({'id_produto': id_produto})[0]
                 
-                if estoque_produtos[nome] < quantidade:
+                if estoque_produto < quantidade:
                     # se produto não disponível -> estoque.indisponivel
                     publish_event(publisher="estoque", channel=ch, event=estoque.indisponivel, conteudo=conteudo)
-                    print(f"\nPedido criado {pedido_id} -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {estoque_produtos[nome]})")
+                    print(f"\nPedido criado {pedido_id} -> estoque indisponível de {nome} (solicitado = {quantidade}, no estoque = {estoque_produto})")
                     return
             
             # caso todos os produtos estejam disponíveis
             # realizar reserva/baixa estoque -> pedido.estoque_ok
             print(f"\nPedido criado {pedido_id} -> estoque ok!\nReservando: ")
             for produto_pedido in conteudo['produtos']:
+                id_produto = produto_pedido['id_produto']
                 nome = produto_pedido['nome']
                 quantidade = produto_pedido['quantidade']
                 
-                antes = estoque_produtos[nome]
-                estoque_produtos[nome] -= quantidade
-                print(f"- {nome} = {antes} -> {estoque_produtos[nome]}")
+                antes = bd.get_estoque({'id_produto': id_produto})[0]
+                bd.reservar_produto({'id_produto': id_produto, 'quantidade': quantidade})
+                print(f"- {nome} = {antes} -> {bd.get_estoque({'id_produto': id_produto})[0]}")
             publish_event(publisher="estoque", channel=ch, event=pedido.estoque_ok, conteudo=conteudo)
         
         # se pedido.excluido -> devolver ao estoque produtos reservados
@@ -63,12 +61,13 @@ def callback(ch, method, properties, body):
             if conteudo["status"] != "excluído - estoque indisponível":
                 print(f"\nPedido excluido {pedido_id} -> estoque devolvido")
                 for produto_reservado in conteudo['produtos']:
+                    id_produto = produto_reservado['id_produto']
                     nome = produto_reservado['nome']
                     quantidade = produto_reservado['quantidade']
-                    antes = estoque_produtos[nome]
-                    estoque_produtos[nome] += quantidade
-                    print(f"- {nome} = {antes} -> {estoque_produtos[nome]}")
-
+                    
+                    antes = bd.get_estoque({'id_produto': id_produto})[0]
+                    bd.devolver_produto({'id_produto': id_produto, 'quantidade': quantidade})
+                    print(f"- {nome} = {antes} -> {bd.get_estoque({'id_produto': id_produto})[0]}")
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
 
