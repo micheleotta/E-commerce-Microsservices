@@ -26,7 +26,7 @@ cursor.execute("SELECT COUNT(*) FROM bakery")
 count = cursor.fetchone()[0]
 if count == 0:
     produtos = [
-        ('Carolina', 'doce', 5.0, 5),
+        ('Carolina', 'doce', 5.0, 25),
         ('Donut', 'doce', 12.0, 50),
         ('Coxinha', 'salgado', 2.0, 20),
         ('Bisnaguinha', 'pao', 30.0, 10),
