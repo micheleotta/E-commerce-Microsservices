@@ -41,17 +41,19 @@
         <section id="product-list" class="row">
             <h2>Produtos</h2>
             <div class="produto col-md-4">
-                <div class="produto-info">
-                    <h3>Nome do Produto</h3>
-                    <p>R$ 19,90</p>
-                </div>
-                <div class="produto-footer">
-                    <button class="btn btn-remove">
-                        <span class="material-symbols-outlined">remove</span>
-                    </button>
-                    <button class="btn btn-add">
-                        <span class="material-symbols-outlined">add</span>
-                    </button>
+                <div class="produto-card">
+                    <div class="produto-info">
+                        <h3>${produto.nome}</h3>
+                        <p>R$${produto.preco.toFixed(2)}</p>
+                    </div>
+                    <div class="produto-footer">
+                        <button onclick="removeProduto(0)" class="btn btn-remove">
+                            <span class="material-symbols-outlined">remove</span>
+                        </button>
+                        <button onclick="addProduto(0)" class="btn btn-add">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
