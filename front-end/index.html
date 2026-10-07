@@ -7,12 +7,40 @@
     <title>Bakery E-commerce</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign" />
+    
     <script src="/js/produtos.js"></script>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body>
-    <h1>Bem-vindo à Sylvanian Bakery</h1>
-    <button onclick="getProdutos()">Buscar Produtos</button>
+    <header>
+        <div class="header-container">
+            <h1>Sylvanian Bakery</h1>
+            <div class="header-right">
+                <nav class="nav">
+                    <ul>
+                        <li><a href="#">Início</a></li>
+                        <li><a href="#">Promoções</a></li>
+                    </ul>
+                </nav>
+                <button class="btn-campaign">
+                    <span class="material-symbols-outlined">campaign</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <button onclick="getProdutos()">Buscar Produtos</button>
+        </div>
+    </main>
 </body>
 
 </html>
