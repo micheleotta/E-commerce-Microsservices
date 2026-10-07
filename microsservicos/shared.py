@@ -14,7 +14,7 @@ estoque = StrEnum('estoque', ['indisponivel'])
 pagamento = StrEnum('pagamento', ['aprovado', 'recusado'])
 interesse = StrEnum('interesse', ['promocao'])
 
-microsservicos = {"principal", "estoque", "pagamento", "entrega"}
+microsservicos = {"principal", "estoque", "pagamento", "entrega", "promocoes"}
 
 # gerar par de chaves RSA para microsservico
 def gerar_chaves(publisher):
