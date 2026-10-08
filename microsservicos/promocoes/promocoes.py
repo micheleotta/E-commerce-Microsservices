@@ -13,17 +13,38 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import interesse, receive_event, gerar_chaves
 
 interessados = {}
+interessados = {
+    'doce': ['michfacul@gmail.com'],
+    'salgado': ['michfacul@gmail.com'],
+    'pao': ['michfacul@gmail.com']
+    }
 
 load_dotenv()
 resend.api_key = os.environ["RESEND_API_KEY"] # obter chave API do arquivo .env
 
+def get_emoji(categoria):
+    if categoria == 'salgado':
+        return '🥠'
+    elif categoria == 'doce':
+        return '🍰'
+    else:
+        return '🥐'
 
 def send_mail(receiver, categoria, produto, desconto):
+    # email formatado
+    caminho = os.path.join(os.path.dirname(__file__), "email.html")
+    with open(caminho, "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("{produto}", str(produto))
+    html = html.replace("{desconto}", str(desconto))
+    html = html.replace("{categoria}", str(categoria))
+    html = html.replace("{emoji}", str(get_emoji(categoria)))
+    
     params: resend.Emails.SendParams = {
-    "from": "Acme <onboarding@resend.dev>",
+    "from": "Sylvanian Bakery <onboarding@resend.dev>",
     "to": [receiver],
     "subject": f"Promoção Especial em {categoria}!",
-    "html": f"<strong>{produto} está com {desconto}% de desconto!</strong>",
+    "html": html,
     }
 
     try:
@@ -32,20 +53,23 @@ def send_mail(receiver, categoria, produto, desconto):
     except ResendError as error:
         print(error)
 
-
-def gerar_promocoes():
+def get_produtos():
     while True:
-        # gerar e publicar promocoes aleatórias de produtos
+        # pegar produtos do e-commerce através do MS Estoque
         try:
             response = requests.get("http://localhost:8001/produtos", timeout=5)
             response.raise_for_status()
             dados = response.json()
-            produtos = dados["produtos"]
-        except requests.RequestException:
-            print("Não foi possível obter os produtos")
+            return dados["produtos"]
+
+        except (requests.RequestException, KeyError) as error:
+            print(f"Não foi possível obter os produtos: {error}")
             time.sleep(30)
-            continue
-        
+
+def gerar_promocoes():
+    produtos = get_produtos()
+    while True:
+        # gerar e publicar promocoes aleatórias de produtos
         produto = random.choice(produtos)
         nome = produto["nome"]
         categoria = produto["categoria"]
