@@ -108,6 +108,12 @@ def consultar_produtos():
         "produtos": produtos_disponiveis
     }
 
+@app.get("/categorias")
+def consultar_categorias():
+    categorias = bd.get_categorias()
+    return categorias
+
+
 if __name__ == "__main__":
     thread_rabbit = threading.Thread(target=consume, daemon=True)
     thread_rabbit.start()
