@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add,close,unsubscribe,mark_email_read" />
     
     <script src="/js/produtos.js"></script>
     <link rel="stylesheet" href="/styles.css">
@@ -27,7 +27,32 @@
                 <nav class="nav">
                     <ul>
                         <li><a href="#">Início</a></li>
-                        <li><a href="#">Promoções</a></li>
+                        <li>
+                            <button onclick="document.getElementById('promo-dialog').showModal()">Promoções</button>
+                            <dialog id="promo-dialog">
+                                <div class="dialog-header">
+                                    <h3>Promoções</h3>
+                                    <button class="btn" type="reset" onclick="document.getElementById('promo-dialog').close()">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                <p>Receba nossas promoções!</p>
+                                <form method="dialog">
+                                    <section>
+                                        <label for="email">E-mail:</label>
+                                        <input type="email" id="email" name="email" required>
+                                    </section>
+                                    <menu>
+                                        <button id="remove-btn" type="submit" class="btn">
+                                            <span class="material-symbols-outlined">unsubscribe</span>
+                                        </button>
+                                        <button id="submit-btn" type="submit" class="btn">
+                                            <span class="material-symbols-outlined">mark_email_read</span>
+                                        </button>
+                                    </menu>
+                                </form>
+                            </dialog>
+                        </li>
                     </ul>
                 </nav>
                 <button class="btn btn-campaign">
