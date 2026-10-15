@@ -5,29 +5,46 @@ import random
 import sys
 import os
 import threading
+import requests
 from dotenv import load_dotenv
 import resend
 from resend.exceptions import ResendError
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from produtos import produtos
 from shared import interesse, receive_event, gerar_chaves
 
-promocoes = {
+interessados = {}
+interessados = {
     'doce': ['michfacul@gmail.com'],
     'salgado': ['michfacul@gmail.com'],
     'pao': ['michfacul@gmail.com']
-    } # arrumar persistência dps
+    }
 
 load_dotenv()
 resend.api_key = os.environ["RESEND_API_KEY"] # obter chave API do arquivo .env
 
+def get_emoji(categoria):
+    if categoria == 'salgado':
+        return '🥠'
+    elif categoria == 'doce':
+        return '🍰'
+    else:
+        return '🥐'
 
 def send_mail(receiver, categoria, produto, desconto):
+    # email formatado
+    caminho = os.path.join(os.path.dirname(__file__), "email.html")
+    with open(caminho, "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("{produto}", str(produto))
+    html = html.replace("{desconto}", str(desconto))
+    html = html.replace("{categoria}", str(categoria))
+    html = html.replace("{emoji}", str(get_emoji(categoria)))
+    
     params: resend.Emails.SendParams = {
-    "from": "Acme <onboarding@resend.dev>",
+    "from": "Sylvanian Bakery <onboarding@resend.dev>",
     "to": [receiver],
     "subject": f"Promoção Especial em {categoria}!",
-    "html": f"<strong>{produto} está com {desconto}% de desconto!</strong>",
+    "html": html,
     }
 
     try:
@@ -36,16 +53,29 @@ def send_mail(receiver, categoria, produto, desconto):
     except ResendError as error:
         print(error)
 
+def get_produtos():
+    while True:
+        # pegar produtos do e-commerce através do MS Estoque
+        try:
+            response = requests.get("http://localhost:8001/produtos", timeout=5)
+            response.raise_for_status()
+            dados = response.json()
+            return dados["produtos"]
+
+        except (requests.RequestException, KeyError) as error:
+            print(f"Não foi possível obter os produtos: {error}")
+            time.sleep(30)
 
 def gerar_promocoes():
+    produtos = get_produtos()
     while True:
         # gerar e publicar promocoes aleatórias de produtos
         produto = random.choice(produtos)
-        nome = produto.get_nome()
-        categoria = produto.get_categoria()
+        nome = produto["nome"]
+        categoria = produto["categoria"]
         desconto = random.randint(5, 50)
 
-        for email in promocoes.get(categoria, []):
+        for email in interessados.get(categoria, []):
             send_mail(receiver=email, categoria=categoria, produto=nome, desconto=desconto)
         
         print(f"[{categoria}] Desconto {desconto}% em {nome}")
@@ -61,7 +91,17 @@ def callback(ch, method, properties, body):
         # identifica os interesses e e-mails dos consumidores cadastrados
         categoria = conteudo['categoria']
         email = conteudo['email']
-        promocoes[categoria].append(email)
+        interesse = conteudo['interesse']
+        
+        if interesse:
+            if categoria not in interessados:
+                interessados[categoria] = []
+            interessados[categoria].append(email)
+            print(f"{email} registrado a promoções de {categoria}")
+        else:
+            if email in interessados[categoria]:
+                interessados[categoria].remove(email)
+                print(f"{email} removido de promoções de {categoria}")
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
 

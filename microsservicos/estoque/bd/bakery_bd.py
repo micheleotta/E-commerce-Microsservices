@@ -30,7 +30,8 @@ if count == 0:
         ('Donut', 'doce', 12.0, 50),
         ('Coxinha', 'salgado', 2.0, 20),
         ('Bisnaguinha', 'pao', 30.0, 10),
-        ('Croissant', 'pao', 20.0, 10)
+        ('Croissant', 'pao', 20.0, 10),
+        ('Pastel', 'salgado', 8.0, 0)
     ]
     
     cursor.executemany(
@@ -52,9 +53,19 @@ def get_produtos():
     try:
         connection = get_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM bakery")
+        cursor.execute("SELECT * FROM bakery WHERE estoque > 0")
         produtos = cursor.fetchall()
         return produtos
+    finally:
+        connection.close()
+
+def get_categorias():
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT DISTINCT categoria FROM bakery")
+        categorias = cursor.fetchall()
+        return categorias
     finally:
         connection.close()
 

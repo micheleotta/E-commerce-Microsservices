@@ -2,10 +2,11 @@
 import pika
 import sys
 import os
+import re
 import threading
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from shared import pagamento, pedido, estoque, receive_event, publish_event, gerar_chaves
+from shared import pagamento, pedido, estoque, interesse, receive_event, publish_event, gerar_chaves
 import estoque.bd.bakery_bd as bd # APAGAR DEPOIS
 
 import uvicorn
@@ -24,159 +25,123 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# O API Gateway deve disponibilizar endpoints REST para:
-# • (0,1) listar produtos disponíveis em estoque;
-# • (0,1) criar pedidos;
-# • (0,1) registrar interesse, informando o e-mail, em receber notificação sobre promoções de categorias;
-# • (0,1) cancelar interesse em receber e-mail sobre.
-
-@app.get("/produtos")
-def listar_produtos():
-    """
-    Retorna a lista de produtos cadastrados sem o objeto _links
-    Consulta a lista de produtos diretamente do MS Estoque (via REST)
-    """
-    try:
-        response = requests.get("http://localhost:8001/produtos", timeout=5)
-        
-        response.raise_for_status()
-        return response.json()
-    
-    except requests.RequestException:
-        raise HTTPException(status_code=503, detail="Serviço de estoque indisponível")
-
 pedidos = {}
 pedidos_lock = threading.Lock()
 prox_id = 1
 
 gerar_chaves("principal")
 
-# função de interação com o usuário pelo terminal
-def interacao():
+# funções auxiliares
+def publicar_evento(event, conteudo):
+    """
+    Conexão separada para a interação
+    -> evitar bloqueio de conexão por demora na interação
+    """
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="localhost"))
+    channel = connection.channel()
+    channel.exchange_declare(exchange="direct_logs", exchange_type="direct")
+    publish_event(publisher="principal", channel=channel, event=event, conteudo=conteudo)
+    connection.close()
+
+def gerenciar_interesse(categoria, email, interessado):
+    """
+    Função para registrar e cancelar interesse de email em categoria
+    """
+    conteudo = {
+        "categoria": categoria,
+        "email": email,
+        "interesse": interessado
+    }
+    
+    # validar email
+    padrao = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    if not re.match(padrao, email):
+        raise HTTPException(status_code=422, detail="Email inválido")
+    
+    # publicar interesse.promocao -> MS promocoes
+    try:
+        publicar_evento(event=interesse.promocao, conteudo=conteudo)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro inesperado {e}")
+    
+    status = "registrado" if interessado else "cancelado"
+    return {"mensagem": f"Interesse {status} na categoria {categoria}!"}
+
+
+# O API Gateway deve disponibilizar endpoints REST para:
+# listar produtos disponíveis em estoque
+@app.get("/produtos")
+def listar_produtos():
+    """
+    Retorna a lista de produtos disponíveis em estoque diretamente do MS Estoque (via REST)
+    """
+    try:
+        response = requests.get("http://localhost:8001/produtos", timeout=5)
+        response.raise_for_status()
+        return response.json()
+    
+    except requests.RequestException:
+        raise HTTPException(status_code=503, detail="Serviço de estoque indisponível")
+
+# listar todas as categorias
+@app.get("/categorias")
+def listar_categorias():
+    """
+    Retorna a lista de categorias diretamente do MS Estoque (via REST)
+    """
+    try:
+        response = requests.get("http://localhost:8001/categorias", timeout=5)
+        response.raise_for_status()
+        return response.json()
+    
+    except requests.RequestException:
+        raise HTTPException(status_code=503, detail="Serviço de estoque indisponível")
+
+# criar pedidos TODO
+@app.post("/pedido")
+def criar_pedido(body: dict):
     global prox_id
     
-    def publicar_interacao(event, conteudo):
-        # conexão separada para a interação
-        # evitar bloqueio de conexão por demora na interação
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host="localhost"))
-        channel = connection.channel()
-        channel.exchange_declare(exchange="direct_logs", exchange_type="direct")
-        publish_event(publisher="principal", channel=channel, event=event, conteudo=conteudo)
-        connection.close()
+    produtos = body["produtos"]
     
-    while True:
-        print("\n========================")
-        print("Selecione uma opção:")
-        print("1 - Visualizar produtos")
-        print("2 - Realizar pedido")
-        print("3 - Excluir pedido")
-        print("4 - Consultar pedidos")
-        print("5 - Sair")
-        print("========================\n")
-        
-        try:
-            opcao = int(input(' '))
-        except ValueError:
-            print("Insira uma opção válida")
-            continue
-        
-        match opcao:
-            case 1:
-                print("\n=== Catálogo de produtos ===")
-                for i, produto in enumerate(bd.get_produtos()):
-                    print(f"{i + 1} - {produto[1]} ({produto[2]})  R${produto[3]}")
-            case 2:
-                # fazer o pedido
-                print("\n=== Realizar pedido ===")
-                for produto in bd.get_produtos():
-                    print(f"{produto[0]} - {produto[1]} ({produto[2]})  R${produto[3]}")
-                
-                fazer_pedido = 1
-                pedido_produtos = []
-                quantidade_produtos = []
+    pedido_id = prox_id
+    prox_id += 1
+    
+    novo_pedido = {
+        "pedido_id": pedido_id,
+        "produtos": [
+            {
+                "id_produto": produto["id_produto"],
+                "nome": produto["nome"],
+                "quantidade": produto["quantidade"],
+                "preco": produto["preco"]
+            } for produto in produtos
+        ],
+        "status": "pedido criado"
+    }
+    
+    with pedidos_lock:
+        pedidos[pedido_id] = novo_pedido
+    
+    publicar_evento(event=pedido.criado, conteudo=novo_pedido)
+    print(f"\nPedido {pedido_id} criado!")
+    return novo_pedido
 
-                while fazer_pedido:
-                    try:
-                        produto_escolhido = int(input("\nInsira o número do produto: ")) - 1
-                        quantidade = int(input("Quantidade: "))
-                    except ValueError:
-                        print("Valor inválido")
-                        continue
-                    
-                    if produto_escolhido < 0 or produto_escolhido >= len(bd.get_produtos()):
-                        print("Produto inválido.")
-                        continue
-                    if quantidade < 0:
-                        print("Quantidade inválida.")
-                        continue
-                    
-                    pedido_produtos.append(bd.get_produtos()[produto_escolhido])
-                    quantidade_produtos.append(quantidade)
-                    
-                    try:
-                        fazer_pedido = int(input("\nComprar mais algum produto? (1 - Sim ; 0 - Não) "))
-                    except ValueError:
-                        fazer_pedido = 0
+# registrar interesse, informando o e-mail, em receber notificação sobre promoções de categorias;
+@app.post("/interesse/{categoria}/{email}")
+def registrar_interesse(categoria, email):
+    """
+    Registra email interessado em categoria
+    """
+    gerenciar_interesse(categoria=categoria, email=email, interessado=True)
 
-                pedido_id = prox_id
-                prox_id += 1
-                
-                novo_pedido = {
-                    "pedido_id": pedido_id,
-                    "produtos": [
-                        {
-                            "id_produto": produto[0],
-                            "nome": produto[1],
-                            "quantidade": quantidade,
-                            "preco": produto[3]
-                        } for produto, quantidade in zip(pedido_produtos, quantidade_produtos)
-                    ],
-                    "status": "pedido criado"
-                }
-                
-                with pedidos_lock:
-                    pedidos[pedido_id] = novo_pedido
-                
-                publicar_interacao(event=pedido.criado, conteudo=novo_pedido)
-                print(f"\nPedido {pedido_id} criado!")
-
-            case 3:
-                print("\n=== Excluir pedido ===")
-                try:
-                    pedido_id = int(input("Insira o número do pedido: "))
-                except ValueError:
-                    print("Número inválido")
-                    continue
-                
-                if pedido_id not in pedidos:
-                    print("Pedido não encontrado.")
-                    continue
-                
-                with pedidos_lock:
-                    if "excluído" in pedidos[pedido_id]["status"]:
-                        print(f"\nPedido {pedido_id} já está excluído!")
-                        continue
-                    pedidos[pedido_id]["status"] = "excluído"
-                
-                publicar_interacao(event=pedido.excluido, conteudo=pedidos[pedido_id])
-                print(f"\nPedido {pedido_id} excluído!")
-            
-            case 4:
-                print("\n=== Status de pedidos ===")
-                with pedidos_lock:
-                    if not pedidos:
-                        print("Nenhum pedido registrado!")
-                        continue
-
-                    for pedido_id, dados in pedidos.items():
-                        print(f"\nPedido {pedido_id} | Status: {dados['status']}")
-                        for p in dados["produtos"]:
-                            print(f"  - {p['nome']} ({p['quantidade']})")
-            case 5:
-                print("Encerrando...")
-                break
-            case _:
-                print("Opção inválida")
+# cancelar interesse em receber e-mail sobre.
+@app.delete("/interesse/{categoria}/{email}")
+def cancelar_interesse(categoria, email):
+    """
+    Cancelar interesse de email em categoria
+    """
+    gerenciar_interesse(categoria=categoria, email=email, interessado=False)
 
 
 def callback(ch, method, properties, body):
