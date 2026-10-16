@@ -368,6 +368,7 @@ section {
     color: var(--secondary-color);
     border-radius: 20px;
     padding: 20px;
+    width: 300px;
     z-index: 1000;
 }
 
@@ -379,4 +380,21 @@ section {
     display: flex;
     justify-content: right;
     gap: 10px;
+}
+
+#promo-dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+}
+
+#promo-dialog section {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#promo-dialog section > div {
+    display: flex;
+    flex-direction: column;
 }

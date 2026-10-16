@@ -128,12 +128,16 @@ def criar_pedido(body: dict):
     return novo_pedido
 
 # registrar interesse, informando o e-mail, em receber notificação sobre promoções de categorias;
-@app.post("/interesse/{categoria}/{email}")
-def registrar_interesse(categoria, email):
+@app.post("/interesse")
+def registrar_interesse(body: dict):
     """
     Registra email interessado em categoria
     """
-    gerenciar_interesse(categoria=categoria, email=email, interessado=True)
+
+    categoria = body["categoria"]
+    email = body["email"]
+
+    return gerenciar_interesse(categoria=categoria, email=email, interessado=True)
 
 # cancelar interesse em receber e-mail sobre.
 @app.delete("/interesse/{categoria}/{email}")
@@ -141,7 +145,7 @@ def cancelar_interesse(categoria, email):
     """
     Cancelar interesse de email em categoria
     """
-    gerenciar_interesse(categoria=categoria, email=email, interessado=False)
+    return gerenciar_interesse(categoria=categoria, email=email, interessado=False)
 
 
 def callback(ch, method, properties, body):

@@ -1,15 +1,65 @@
-(function () {
-    var removeBtn = document.getElementById("remove-btn");
-    var cancelButton = document.getElementById("cancel");
-    var promoDialog = document.getElementById("promo-dialog");
+var categorias = [];
 
-    // O botão Update abre uma Dialog
-    removeBtn.addEventListener("click", function () {
-        promoDialog.showModal();
-    });
+function setCategorias(categorias) {
+    var container = document.getElementById('categoria');
+    container.innerHTML = '';
 
-    // O botão cancelButtom fecha uma Dialog
-    cancelButton.addEventListener("click", function () {
-        promoDialog.close();
+    categorias.forEach(categoria => {
+        container.innerHTML += `<option value="${categoria}">${categoria}</option>`
     });
+}
+
+function getCategorias() {
+    var url = `http://localhost:8000/categorias`;
+    var headers = new Headers();
+
+    fetch(url, { method: 'GET', headers: headers })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            categorias = data || [];
+            setCategorias(categorias);
+        })
+        .catch(error => {
+            console.error('Erro ao buscar categorias:', error);
+        });
+}
+
+function informarInteresse() {
+    var categoria = document.getElementById("categoria").value;
+    var email = document.getElementById("email").value;
+
+    var url = `http://localhost:8000/interesse`;
+    var headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    fetch(url, { method: 'POST', headers: headers, body: JSON.stringify({ categoria, email }) })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Erro ao informar interesse:', error);
+        });
+}
+
+function removerInteresse() {
+    var categoria = document.getElementById("categoria").value;
+    var email = document.getElementById("email").value;
+
+    var url = `http://localhost:8000/interesse/${categoria}/${email}`;
+    var headers = new Headers();
+
+    fetch(url, { method: 'DELETE', headers: headers })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Erro ao remover interesse:', error);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    getCategorias();
 });

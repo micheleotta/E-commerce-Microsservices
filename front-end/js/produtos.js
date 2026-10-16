@@ -1,4 +1,5 @@
-const baseUrl = 'http://localhost:8000';
+var produtos = {};
+var carrinho = null;
 
 class Carrinho {
     constructor() {
@@ -84,9 +85,6 @@ class Carrinho {
     }
 }
 
-produtos = {};
-carrinho = null;
-
 function removeProduto(produtoId) {
     carrinho.removeProduto(produtoId);
 }
@@ -101,7 +99,7 @@ function fazerPedido() {
         return;
     }
 
-    var url = `${baseUrl}/pedido`;
+    var url = `http://localhost:8000/pedido`;
     var headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
@@ -117,7 +115,7 @@ function fazerPedido() {
             console.log(data);
         })
         .catch(error => {
-            console.error('Erro ao buscar produtos:', error);
+            console.error('Erro ao fazer pedido:', error);
         });
 }
 
@@ -153,7 +151,7 @@ function displayProdutos(produtos) {
 }
 
 function getProdutos() {
-    var url = `${baseUrl}/produtos`;
+    var url = `http://localhost:8000/produtos`;
     var headers = new Headers();
 
     fetch(url, { method: 'GET', headers: headers })
