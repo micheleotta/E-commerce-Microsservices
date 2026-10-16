@@ -6,6 +6,7 @@ class Carrinho {
         this.backdrop = document.getElementById("backdrop");
         this.carrinhoSidebar = document.getElementById('carrinho');
         this.carrinhoContainer = document.getElementById('cart-container');
+        this.carrinhoBtn = document.getElementById('cart-btn');
         this.total = document.getElementById('total-price');
     }
 
@@ -50,10 +51,12 @@ class Carrinho {
     }
 
     atualizarCarrinho() {
+        var qtd = 0;
+
         this.carrinhoContainer.innerHTML = '';        
         Object.entries(carrinho.produtoQtd).map(([id, quantidade]) => {
             const produto = produtos[id];
-            if (produto)
+            if (produto) {
                 this.carrinhoContainer.innerHTML += `
                     <div class="produto-card">
                         <div class="produto-info">
@@ -71,9 +74,13 @@ class Carrinho {
                         </div>
                     </div>
                 `;
+
+                qtd += quantidade;
+            }
         });
 
         this.total.innerHTML = `R$${this.calcularTotal().toFixed(2)}`;
+        this.carrinhoBtn.setAttribute('data-count', qtd);
     }
 }
 
