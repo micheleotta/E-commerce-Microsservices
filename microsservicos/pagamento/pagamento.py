@@ -48,7 +48,12 @@ def callback(ch, method, properties, body):
         try:
             response = requests.post(
                 "http://localhost:8100/api/pagamento",
-                json={ "pedido_id": pedido_id, "valor": valor, "callback_url": "" },
+                json={
+                    "pedido_id": pedido_id,
+                    "produtos": conteudo['produtos'],
+                    "valor": valor,
+                    "callback_url": f"http://localhost:8002/webhook/pagamento"
+                },
                 timeout=5
             )
             response.raise_for_status()
@@ -67,18 +72,24 @@ app = FastAPI(title="Microsserviço de Pagamento")
 
 class WebhookBody(BaseModel):
     pedido_id: int
+    produtos: list
     aprovado: bool
 
 @app.post("/webhook/pagamento")
 def receber_webhook_pagamento(body: WebhookBody):
-    if(body["aprovado"]):
+    conteudo = { "pedido_id": body.pedido_id, "produtos": body.produtos, "aprovado": body.aprovado }
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+
+    if(body.aprovado):
         # publicar um evento pagamento.aprovado
-        publish_event(publisher="pagamento", channel=ch, event=pagamento.aprovado, conteudo=body)
-        print(f"\nPedido {pedido_id} -> pagamento aprovado!")
+        publish_event(publisher="pagamento", channel=channel, event=pagamento.aprovado, conteudo=conteudo)
+        print(f"\nPedido {body.pedido_id} -> pagamento aprovado!")
     else:
         # publicar um evento pagamento.recusado
-        publish_event(publisher="pagamento", channel=ch, event=pagamento.recusado, conteudo=body)
-        print(f"\nPedido {pedido_id} -> pagamento recusado")
+        publish_event(publisher="pagamento", channel=channel, event=pagamento.recusado, conteudo=conteudo)
+        print(f"\nPedido {body.pedido_id} -> pagamento recusado")
     
     return {"mensagem": "Webhook recebido com sucesso!"}
 

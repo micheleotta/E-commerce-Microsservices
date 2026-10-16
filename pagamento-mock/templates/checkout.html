@@ -40,7 +40,7 @@
         <section>
             <h1>Pagamento</h1>
             <p>Você está pagando um total de: R${{ "%0.2f" | format(valor | float) }}</p>
-            <form action="/pagamento/{{ pedido_id }}">
+            <form action="/pagamento/{{ pedido_id }}" method="post">
                 <button type="submit" name="action" value="recusar" id="btn-recusar">
                     Recusar
                 </button>
