@@ -118,8 +118,12 @@ h2::after {
     border-radius: 20px;
     padding: 10px;
     overflow: visible;
-    /* display: none; */
+    display: none;
     z-index: 1000;
+}
+
+.dropdown.open {
+    display: block;
 }
 
 .dropdown::before {
