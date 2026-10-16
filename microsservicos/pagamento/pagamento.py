@@ -3,20 +3,34 @@ import pika
 import random
 import sys
 import os
+import threading
+import requests
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import pedido, pagamento, publish_event, receive_event, gerar_chaves
 
-# conectar
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
+def consume():
+    # conectar
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
 
-# tipo Direct
-channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
-result = channel.queue_declare(queue='pagamento', exclusive=True)
-queue_name = result.method.queue
+    # tipo Direct
+    channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
+    result = channel.queue_declare(queue='pagamento', exclusive=True)
+    queue_name = result.method.queue
 
-# consome o evento pedido.estoque_ok
-channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pedido.estoque_ok)
+    # consome o evento pedido.estoque_ok
+    channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=pedido.estoque_ok)
+
+    channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    try:
+        gerar_chaves("pagamento")
+        print("Microsserviço de pagamento iniciado!")
+        channel.start_consuming()
+    except KeyboardInterrupt:
+        channel.stop_consuming()
 
 
 def callback(ch, method, properties, body):
@@ -26,24 +40,49 @@ def callback(ch, method, properties, body):
     # processar evento somente se assinatura for válida!
     if valida:
         pedido_id = conteudo['pedido_id']
-        # processamento do pagamento simulado por variáveis aleatórias
-        aprovado = random.randint(1,101) % 2 == 0
-        if(aprovado):
-            # publicar um evento pagamento.aprovado
-            publish_event(publisher="pagamento", channel=ch, event=pagamento.aprovado, conteudo=conteudo)
-            print(f"\nPedido {pedido_id} -> pagamento aprovado!")
-        else:
-            # publicar um evento pagamento.recusado
+
+        valor = 0
+        for produto_pedido in conteudo['produtos']:
+            valor += produto_pedido['preco'] * produto_pedido['quantidade']
+
+        try:
+            response = requests.post(
+                "http://localhost:8100/api/pagamento",
+                json={ "pedido_id": pedido_id, "valor": valor, "callback_url": "" },
+                timeout=5
+            )
+            response.raise_for_status()
+            print(f"\nPedido {pedido_id} -> pagamento iniciado")
+            print(response.json())
+        
+        except requests.RequestException:
             publish_event(publisher="pagamento", channel=ch, event=pagamento.recusado, conteudo=conteudo)
-            print(f"\nPedido {pedido_id} -> pagamento recusado")
+            print(f"\nPedido {pedido_id} -> erro ao iniciar pagamento")
     else:
         print(f"Assinatura inválida, evento {evento} descartado!")
 
 
-channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
-try:
-    gerar_chaves("pagamento")
-    print("Microsserviço de pagamento iniciado!")
-    channel.start_consuming()
-except KeyboardInterrupt:
-    channel.stop_consuming()
+# expõe um endpoint para o Webhook do Mock de Pagamento
+app = FastAPI(title="Microsserviço de Pagamento")
+
+class WebhookBody(BaseModel):
+    pedido_id: int
+    aprovado: bool
+
+@app.post("/webhook/pagamento")
+def receber_webhook_pagamento(body: WebhookBody):
+    if(body["aprovado"]):
+        # publicar um evento pagamento.aprovado
+        publish_event(publisher="pagamento", channel=ch, event=pagamento.aprovado, conteudo=body)
+        print(f"\nPedido {pedido_id} -> pagamento aprovado!")
+    else:
+        # publicar um evento pagamento.recusado
+        publish_event(publisher="pagamento", channel=ch, event=pagamento.recusado, conteudo=body)
+        print(f"\nPedido {pedido_id} -> pagamento recusado")
+    
+    return {"mensagem": "Webhook recebido com sucesso!"}
+
+if __name__ == "__main__":
+    thread_rabbit = threading.Thread(target=consume, daemon=True)
+    thread_rabbit.start()
+    uvicorn.run(app, host="0.0.0.0", port=8002)
