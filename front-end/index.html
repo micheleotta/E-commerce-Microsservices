@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add,close,unsubscribe,mark_email_read,shopping_cart,attach_money" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add,close,unsubscribe,mark_email_read,shopping_cart,attach_money,percent_discount" />
     
     <script src="/js/produtos.js"></script>
     <link rel="stylesheet" href="/styles.css">
@@ -59,7 +59,18 @@
                     <button class="btn-icon btn-promo">
                         <span class="material-symbols-outlined">campaign</span>
                     </button>
-                    <!-- <div id="promo-dropdown" class="dropdown"></div> -->
+                    <div id="promo-dropdown" class="dropdown">
+                        <div id="promo-container">
+                            <div class="promo-content">
+                                <span class="material-symbols-outlined">percent_discount</span>
+                                <p>O produto Bisnaguinha entrou em uma promoção de N%!</p>
+                            </div>
+                            <div class="promo-content">
+                                <span class="material-symbols-outlined">percent_discount</span>
+                                <p>O produto Carolina entrou em uma promoção de N%!</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <button class="btn-icon" onclick="carrinho.abrir()">
