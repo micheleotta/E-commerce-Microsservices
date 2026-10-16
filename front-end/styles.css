@@ -8,6 +8,11 @@
     --header-height: 80px;
 }
 
+button {
+    font-family: var(--font-family);
+    font-size: 1rem;
+}
+
 header {
     position: fixed;
     top: 10px;
@@ -27,6 +32,7 @@ body {
     color: var(--primary-color);
     background-color: var(--secondary-color);
     font-family: var(--font-family);
+    font-size: 1rem;
 }
 
 main {
@@ -60,24 +66,32 @@ h1 {
     gap: 40px;
 }
 
-.btn {
-    background-color: transparent;
+.btn,
+.btn-icon {
+    background-color: var(--primary-color);
     color: var(--secondary-color);
     border: none;
-    border-radius: 20px;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    transition: filter 0.2s ease-in-out;
 
-    height: 40px;
-    width: 40px;
-
+    border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+.btn {
+    padding: 10px 20px;
+}
+
+.btn-icon {
+    height: 40px;
+    width: 40px;
+}
+
+.btn:hover,
+.btn-icon:hover {
+    filter: brightness(0.75);
 }
 
 .nav > ul {
@@ -92,7 +106,6 @@ h1 {
 .nav > ul > li > a,
 .nav > ul > li > button {
     font-family: var(--font-family);
-    font-size: 1rem;
     cursor: pointer;
 }
 
