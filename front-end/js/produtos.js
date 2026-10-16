@@ -3,11 +3,36 @@ const baseUrl = 'http://localhost:8000';
 class Carrinho {
     constructor() {
         this.produtoQtd = {};
+        this.backdrop = document.getElementById("backdrop");
+        this.carrinhoSidebar = document.getElementById('carrinho');
+        this.carrinhoContainer = document.getElementById('cart-container');
+        this.total = document.getElementById('total-price');
+    }
+
+    abrir() {
+        this.backdrop.style.display = 'block';
+        this.carrinhoSidebar.classList.add('open');
+    }
+
+    fechar() {
+        this.backdrop.style.display = 'none';
+        this.carrinhoSidebar.classList.remove('open');
+    }
+
+    calcularTotal() {
+        let total = 0;
+        Object.entries(this.produtoQtd).forEach(([id, quantidade]) => {
+            const produto = produtos[id];
+            if (produto)
+                total += produto.preco * quantidade;
+        });
+        return total;
     }
 
     addProduto(produtoId) {
         if (produtos[produtoId]) {
             this.produtoQtd[produtoId] = (this.produtoQtd[produtoId] || 0) + 1;
+            this.atualizarCarrinho();
         } else {
             console.error(`Produto com ID ${produtoId} não encontrado.`);
         }
@@ -19,13 +44,41 @@ class Carrinho {
         this.produtoQtd[produtoId] = (this.produtoQtd[produtoId] || 0) - 1;
         if (this.produtoQtd[produtoId] <= 0)
             delete this.produtoQtd[produtoId];
-
+        
+        this.atualizarCarrinho();
         console.log(`Produto com ID ${produtoId} removido do carrinho.`);
+    }
+
+    atualizarCarrinho() {
+        this.carrinhoContainer.innerHTML = '';        
+        Object.entries(carrinho.produtoQtd).map(([id, quantidade]) => {
+            const produto = produtos[id];
+            if (produto)
+                this.carrinhoContainer.innerHTML += `
+                    <div class="produto-card">
+                        <div class="produto-info">
+                            <h3>${produto.nome}</h3>
+                            <p>R$${produto.preco.toFixed(2)}</p>
+                        </div>
+                        <div class="produto-footer">
+                            <button onclick="removeProduto(${produto.id_produto})" class="btn-icon btn-remove">
+                                <span class="material-symbols-outlined">remove</span>
+                            </button>
+                            <span>${quantidade}</span>
+                            <button onclick="addProduto(${produto.id_produto})" class="btn-icon btn-add">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+        });
+
+        this.total.innerHTML = `R$${this.calcularTotal().toFixed(2)}`;
     }
 }
 
 produtos = {};
-carrinho = new Carrinho();
+carrinho = null;
 
 function removeProduto(produtoId) {
     carrinho.removeProduto(produtoId);
@@ -68,7 +121,7 @@ function displayProdutos(produtos) {
     }
     
     var produtosContainer = document.getElementById('product-list');
-    produtosContainer.innerHTML = '';
+    produtosContainer.innerHTML = '<h2 class="col-12">Produtos</h2>';
     
     produtos.forEach(function(produto) {
         produtosContainer.innerHTML += `
@@ -113,5 +166,6 @@ function getProdutos() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    carrinho = new Carrinho();
     getProdutos();
 });

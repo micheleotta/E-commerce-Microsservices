@@ -51,19 +51,193 @@ h1 {
     margin: 0;
 }
 
+h2::after {
+    content: "";
+    display: block;
+    width: 50px;
+    height: 4px;
+    background-color: var(--primary-color);
+    margin-top: 4px;
+}
+
 .header-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
 
     height: 100%;
-    padding: 0 40px;
+    padding: 0 20px;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 20px;
+}
+
+.header-right > div {
+    position: relative;
+}
+
+.nav > ul {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.nav > ul > li > a,
+.nav > ul > li > button {
+    font-family: var(--font-family);
+    cursor: pointer;
+}
+
+.nav > ul > li > a {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    transition: color 0.3s ease-in-out;
+}
+
+.nav > ul > li > button {
+    border: none;
+    background: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: 3px solid var(--secondary-color);
+    border-radius: 20px;
+    padding: 10px;
+    /* display: none; */
+    z-index: 1000;
+
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+#backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 1500;
+    display: none;
+    backdrop-filter: blur(2px);
+}
+
+#carrinho {
+    transform: translateX(300px);
+    transition: transform 0.3s ease-in-out;
+}
+
+#carrinho.open {
+    transform: translateX(0);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    z-index: 2000;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;
+}
+
+.sidebar > div {
+    padding: 20px;
+}
+
+.cart-header {
+    position: sticky;
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+.cart-header h2 {
+    margin: 0;
+}
+
+.cart-header h2::after {
+    background-color: var(--secondary-color);
+}
+
+#cart-container {
+    background-color: var(--offwhite-color);
+    color: var(--primary-color);
+
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#cart-container .btn-icon {
+    height: 30px;
+    width: 30px;
+}
+
+#cart-container .btn-icon .material-symbols-outlined {
+    font-size: 20px;
+}
+
+#cart-container .produto-card {
+    padding: 10px 20px;
+}
+
+#cart-container .produto-card h3 {
+    font-size: 1rem;
+}
+
+#cart-container .produto-card .produto-info > p {
+    font-size: 0.75rem;
+}
+
+.cart-footer {
+    position: absolute;
+    bottom: 0;
+    border-top: 3px solid var(--secondary-color);
+    background-color: var(--primary-color);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.cart-footer button {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+
+    font-weight: 700;
+}
+
+.cart-footer .total-container p {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+#total-price {
+    font-weight: 700;
 }
 
 .btn,
@@ -94,48 +268,10 @@ h1 {
     filter: brightness(0.75);
 }
 
-.nav > ul {
-    display: flex;
-    gap: 40px;
-    list-style: none;
-
-    margin: 0;
-    padding: 0;
-}
-
-.nav > ul > li > a,
-.nav > ul > li > button {
-    font-family: var(--font-family);
-    cursor: pointer;
-}
-
-.nav > ul > li > a {
-    text-decoration: none;
-    color: var(--secondary-color);
-    font-weight: 500;
-    transition: color 0.3s ease-in-out;
-}
-
-.nav > ul > li > button {
-    border: none;
-    background: none;
-    color: var(--secondary-color);
-    font-weight: 500;
-}
-
 section {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-}
-
-h2::after {
-    content: "";
-    display: block;
-    width: 50px;
-    height: 4px;
-    background-color: var(--primary-color);
-    margin-top: 0;
 }
 
 .produto {
