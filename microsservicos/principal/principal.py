@@ -7,11 +7,13 @@ import threading
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import pagamento, pedido, estoque, interesse, receive_event, publish_event, gerar_chaves
-import estoque.bd.bakery_bd as bd # APAGAR DEPOIS
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+import asyncio
+import json
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Dict, Any
 
@@ -24,6 +26,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+conexoes_sse = {}
+loop = None
 
 pedidos = {}
 pedidos_lock = threading.Lock()
@@ -97,7 +102,7 @@ def listar_categorias():
     except requests.RequestException:
         raise HTTPException(status_code=503, detail="Serviço de estoque indisponível")
 
-# criar pedidos TODO
+# criar pedido
 @app.post("/pedido")
 def criar_pedido(body: dict):
     global prox_id
@@ -109,7 +114,6 @@ def criar_pedido(body: dict):
     
     novo_pedido = {
         "pedido_id": pedido_id,
-        "email": body["email"],
         "produtos": [
             {
                 "id_produto": produto["id_produto"],
@@ -148,6 +152,49 @@ def cancelar_interesse(categoria, email):
     """
     return gerenciar_interesse(categoria=categoria, email=email, interessado=False)
 
+async def notificar_cliente(pedido_id, mensagem):
+    """
+    Enviar atualizacoes do pedido para o cliente
+    """
+    pedido_id = str(pedido_id)
+    if pedido_id in conexoes_sse:
+        await conexoes_sse[pedido_id].put(mensagem)
+
+@app.get("/sse/pedido/{pedido_id}")
+async def sse_endpoint(pedido_id, request: Request):
+    """Endpoint que mantém a conexão aberta transmitindo eventos."""
+    fila_atualizacoes = asyncio.Queue()
+    conexoes_sse[str(pedido_id)] = fila_atualizacoes
+
+    async def evento_gerador():
+        """Gerador assíncrono que envia as atualizacoes do pedido."""
+        try:
+            yield f"data: {json.dumps({ "message": "" })}\n\n"
+
+            while True:
+                # Espera por novas atualizacoes do pedido
+                mensagem = await fila_atualizacoes.get()
+
+                print(mensagem)
+
+                # O formato padrão do SSE exige o prefixo "data: " e terminar com "\n\n"
+                yield f"data: {mensagem}\n\n"
+
+        except asyncio.CancelledError:
+            print(f"\nErro no SSE do pedido {pedido_id}")
+            pass
+        finally:
+            print(f"\nSSE finalizado para o pedido {pedido_id}")
+            conexoes_sse.pop(str(pedido_id))
+
+    return StreamingResponse(
+        evento_gerador(),
+        media_type="text/event-stream",  # Header obrigatório para SSE
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 def callback(ch, method, properties, body):
     valida, conteudo = receive_event(consumer="principal", properties=properties, conteudo=body)
@@ -173,8 +220,17 @@ def callback(ch, method, properties, body):
                 status = f"excluído - {motivos[evento]}"
                 pedidos[pedido_id]["status"] = status
                 publish_event(publisher='principal', channel=ch, event=pedido.excluido, conteudo=pedidos[pedido_id])
+            
             pedidos[pedido_id]["status"] = status
             
+            asyncio.run_coroutine_threadsafe(
+                notificar_cliente(pedido_id, json.dumps({
+                    "status": status,
+                    "message": f"Atualização do pedido {pedido_id}: {status}"
+                })),
+                loop
+            )
+        
         print(f"\nPedido {pedido_id} atualizado -> Status: {status}")
     else:
         print(f"\nAssinatura inválida, evento {evento} descartado!")
@@ -199,7 +255,13 @@ def consume():
     channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     channel.start_consuming()
 
-if __name__ == "__main__":
+@app.on_event("startup")
+async def startup():
+    global loop
+    loop = asyncio.get_event_loop()
+    
     thread_rabbit = threading.Thread(target=consume, daemon=True)
     thread_rabbit.start()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, timeout_graceful_shutdown=1)

@@ -98,12 +98,36 @@ function addProduto(produtoId) {
     carrinho.addProduto(produtoId);
 }
 
-function fazerPedido() {
-    if (!localStorage.getItem("email")) {
-        alert('Você deve fazer o login antes de realizar um pedido.');
-        return;
-    }
+function setupSSE(pedido_id) {
+    var btn = document.getElementById("pedido-btn");
+    document.getElementById("sem-pedidos").style.display = "none";
 
+    const sseEvent = new EventSource(`http://localhost:8000/sse/pedido/${pedido_id}`);
+    sseEvent.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log(event);
+
+        if (!data.status)
+            return;
+
+        var container = document.getElementById("pedido-container");
+        container.innerHTML += `
+            <div class="pedido-content">
+                <span class="material-symbols-outlined">notification_important</span>
+                <p>${data.message}</p>
+            </div>
+        `;
+
+        var qtd = parseInt(btn.getAttribute("data-count")) || 0;
+        btn.setAttribute("data-count", qtd += 1);
+    };
+
+    sseEvent.onerror = (err) => {
+        console.error("Erro no SSE:", err);
+    };
+}
+
+function fazerPedido() {
     if (Object.keys(carrinho.produtoQtd).length === 0) {
         alert('O carrinho está vazio. Adicione produtos antes de fazer o pedido.');
         return;
@@ -122,8 +146,9 @@ function fazerPedido() {
     fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(data) })
         .then(response => response.json())
         .then(data => {
-            carrinho.limpar();
             console.log(data);
+            carrinho.limpar();
+            setupSSE(data.pedido_id);
         })
         .catch(error => {
             console.error('Erro ao fazer pedido:', error);

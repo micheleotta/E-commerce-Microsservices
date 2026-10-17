@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add,close,unsubscribe,mark_email_read,shopping_cart,attach_money,percent_discount,login,logout" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=campaign,remove,add,close,unsubscribe,mark_email_read,shopping_cart,attach_money,notification_important,login,logout" />
     
     <script src="/js/login.js"></script>
     <script src="/js/produtos.js"></script>
@@ -67,18 +67,13 @@
                     </ul>
                 </nav>
                 <div>
-                    <button onclick="document.getElementById('promo-dropdown').classList.toggle('open')" class="btn-icon btn-promo" data-count="0">
+                    <button id="pedido-btn" onclick="document.getElementById('pedido-dropdown').classList.toggle('open')" class="btn-icon" data-count="0">
                         <span class="material-symbols-outlined">campaign</span>
                     </button>
-                    <div id="promo-dropdown" class="dropdown">
-                        <div id="promo-container">
-                            <div class="promo-content">
-                                <span class="material-symbols-outlined">percent_discount</span>
-                                <p>O produto Bisnaguinha entrou em uma promoção de N%!</p>
-                            </div>
-                            <div class="promo-content">
-                                <span class="material-symbols-outlined">percent_discount</span>
-                                <p>O produto Carolina entrou em uma promoção de N%!</p>
+                    <div id="pedido-dropdown" class="dropdown">
+                        <div id="pedido-container">
+                            <div id="sem-pedidos" class="pedido-content">
+                                <p style="margin: auto;">Ainda não há nenhuma atualização de pedidos.</p>
                             </div>
                         </div>
                     </div>

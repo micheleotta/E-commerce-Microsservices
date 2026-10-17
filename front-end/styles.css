@@ -44,6 +44,8 @@ header {
     /* background-color: #a781e9; */
     color: var(--secondary-color);
     background-color: var(--primary-color);
+
+    z-index: 100;
 }
 
 body {
@@ -154,13 +156,13 @@ h2::after {
     border-color: transparent transparent var(--secondary-color) transparent;
 }
 
-#promo-container {
+#pedido-container {
     max-height: 400px;
     overflow-y: auto;
     width: 300px;
 }
 
-.promo-content {
+.pedido-content {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -169,11 +171,11 @@ h2::after {
     padding: 10px 0;
 }
 
-.promo-content > p {
+.pedido-content > p {
     margin: 0;
 }
 
-.promo-content:has(~ .promo-content){
+.pedido-content:has(~ .pedido-content){
     border-bottom: 1px solid var(--secondary-color);
 }
 

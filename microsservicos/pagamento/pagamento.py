@@ -50,7 +50,6 @@ def callback(ch, method, properties, body):
                 "http://localhost:8100/api/pagamento",
                 json={
                     "pedido_id": pedido_id,
-                    "email": email,
                     "produtos": conteudo['produtos'],
                     "valor": valor,
                     "callback_url": f"http://localhost:8002/webhook/pagamento"
@@ -82,7 +81,6 @@ class WebhookBody(BaseModel):
 def receber_webhook_pagamento(body: WebhookBody):
     conteudo = {
         "pedido_id": body.pedido_id,
-        "email": body.email,
         "produtos": body.produtos,
         "aprovado": body.aprovado
     }
