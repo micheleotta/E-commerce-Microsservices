@@ -175,8 +175,6 @@ async def sse_endpoint(pedido_id, request: Request):
                 # Espera por novas atualizacoes do pedido
                 mensagem = await fila_atualizacoes.get()
 
-                print(mensagem)
-
                 # O formato padrão do SSE exige o prefixo "data: " e terminar com "\n\n"
                 yield f"data: {mensagem}\n\n"
 
@@ -207,6 +205,8 @@ def callback(ch, method, properties, body):
             pedido_id = conteudo['pedido_id']
             if evento == pagamento.aprovado:
                 status = "pagamento aprovado"
+            elif evento == pagamento.iniciado:
+                status = "pagamento iniciado"
             elif evento == pedido.enviado:
                 status = "pedido enviado"
             elif evento == pedido.estoque_ok:
@@ -226,7 +226,8 @@ def callback(ch, method, properties, body):
             asyncio.run_coroutine_threadsafe(
                 notificar_cliente(pedido_id, json.dumps({
                     "status": status,
-                    "message": f"Atualização do pedido {pedido_id}: {status}"
+                    "message": f"Atualização do pedido {pedido_id}: {status}",
+                    "link": conteudo.get("pagamento_url") # Temporário
                 })),
                 loop
             )
@@ -247,7 +248,7 @@ def consume():
     queue_name = result.method.queue
 
     # eventos que consome
-    eventos = [pagamento.aprovado, pagamento.recusado, pedido.enviado, pedido.estoque_ok, estoque.indisponivel]
+    eventos = [pagamento.iniciado, pagamento.aprovado, pagamento.recusado, pedido.enviado, pedido.estoque_ok, estoque.indisponivel]
     for evento in eventos:
         # subscribing, novo binding para cada evento de interesse
         channel.queue_bind(exchange='direct_logs', queue=queue_name, routing_key=evento)
@@ -259,7 +260,7 @@ def consume():
 async def startup():
     global loop
     loop = asyncio.get_event_loop()
-    
+
     thread_rabbit = threading.Thread(target=consume, daemon=True)
     thread_rabbit.start()
 

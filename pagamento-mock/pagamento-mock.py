@@ -39,7 +39,7 @@ def iniciar_pagamento(body: SolicitacaoPagamento):
     }
 
     pagamento_url = f"http://localhost:8100/checkout/{body.pedido_id}"
-    return { "pagamento_url": pagamento_url }
+    return { "pedido_id": body.pedido_id, "pagamento_url": pagamento_url }
 
 @app.get("/checkout/{pedido_id}", response_class=HTMLResponse)
 def pagina_checkout(req: Request, pedido_id: str):

@@ -59,7 +59,8 @@ def callback(ch, method, properties, body):
             response.raise_for_status()
             print(f"\nPedido {pedido_id} -> pagamento iniciado")
 
-            # TODO: mandar a URL para o usuário
+            # Temporário
+            publish_event(publisher="pagamento", channel=ch, event=pagamento.iniciado, conteudo=response.json())
             print(response.json())
         
         except requests.RequestException:

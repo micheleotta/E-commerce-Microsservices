@@ -162,6 +162,16 @@ h2::after {
     width: 300px;
 }
 
+a.pedido-content {
+    cursor: pointer;
+    transition: filter 0.2s ease-in-out;
+    text-decoration: none;
+}
+
+a.pedido-content:hover {
+    filter: brightness(0.75);
+}
+
 .pedido-content {
     display: flex;
     align-items: center;
@@ -169,6 +179,11 @@ h2::after {
 
     font-size: 0.75rem;
     padding: 10px 0;
+
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    border-radius: 3px;
 }
 
 .pedido-content > p {

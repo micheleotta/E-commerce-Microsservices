@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # definir tipos de eventos
 pedido = StrEnum('pedido', ['criado', 'enviado', 'estoque_ok', 'excluido'])
 estoque = StrEnum('estoque', ['indisponivel'])
-pagamento = StrEnum('pagamento', ['aprovado', 'recusado'])
+pagamento = StrEnum('pagamento', ['iniciado', 'aprovado', 'recusado'])
 interesse = StrEnum('interesse', ['promocao'])
 
 microsservicos = {"principal", "estoque", "pagamento", "entrega", "promocoes"}
