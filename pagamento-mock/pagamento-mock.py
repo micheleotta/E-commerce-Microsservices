@@ -23,6 +23,7 @@ pagamentos = {}
 
 class SolicitacaoPagamento(BaseModel):
     pedido_id: int
+    email: str
     produtos: list
     valor: float
     callback_url: str
@@ -33,6 +34,7 @@ def iniciar_pagamento(body: SolicitacaoPagamento):
         raise HTTPException(status_code=400, detail="Faltando ID do pedido")
 
     pagamentos[str(body.pedido_id)] = {
+        "email": body.email,
         "produtos": body.produtos,
         "valor": body.valor,
         "callback_url": body.callback_url
@@ -74,7 +76,12 @@ def processar_pagamento(
     try:
         response = requests.post(
             pagamento["callback_url"],
-            json={ "pedido_id": pedido_id, "produtos": pagamento["produtos"], "aprovado": aprovado },
+            json={
+                "pedido_id": pedido_id,
+                "email": email,
+                "produtos": pagamento["produtos"],
+                "aprovado": aprovado
+            },
             timeout=5
         )
         response.raise_for_status()

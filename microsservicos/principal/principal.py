@@ -109,6 +109,7 @@ def criar_pedido(body: dict):
     
     novo_pedido = {
         "pedido_id": pedido_id,
+        "email": body["email"],
         "produtos": [
             {
                 "id_produto": produto["id_produto"],

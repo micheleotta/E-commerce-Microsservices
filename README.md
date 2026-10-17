@@ -17,8 +17,7 @@
 * `python microsservicos/pagamento/pagamento.py`
 * `python microsservicos/entrega/entrega.py`
 * `python microsservicos/promocoes/promocoes.py`
-* `python consumidor_C1.py`
-* `python consumidor_C2.py`
+* `python pagamento-mock/pagamento-mock.py`
 
 ## Exemplificação
 <img width="1134" height="626" alt="image" src="https://github.com/user-attachments/assets/bb30c5be-b24e-4a6c-b90c-4661d1008e5b" />

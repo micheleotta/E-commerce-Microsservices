@@ -50,6 +50,7 @@ def callback(ch, method, properties, body):
                 "http://localhost:8100/api/pagamento",
                 json={
                     "pedido_id": pedido_id,
+                    "email": email,
                     "produtos": conteudo['produtos'],
                     "valor": valor,
                     "callback_url": f"http://localhost:8002/webhook/pagamento"
@@ -58,6 +59,8 @@ def callback(ch, method, properties, body):
             )
             response.raise_for_status()
             print(f"\nPedido {pedido_id} -> pagamento iniciado")
+
+            # TODO: mandar a URL para o usuário
             print(response.json())
         
         except requests.RequestException:
@@ -77,7 +80,12 @@ class WebhookBody(BaseModel):
 
 @app.post("/webhook/pagamento")
 def receber_webhook_pagamento(body: WebhookBody):
-    conteudo = { "pedido_id": body.pedido_id, "produtos": body.produtos, "aprovado": body.aprovado }
+    conteudo = {
+        "pedido_id": body.pedido_id,
+        "email": body.email,
+        "produtos": body.produtos,
+        "aprovado": body.aprovado
+    }
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()

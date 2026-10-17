@@ -60,6 +60,16 @@ function removerInteresse() {
         });
 }
 
+function abrirPromo() {
+    var dialog = document.getElementById("promo-dialog");
+    var email = localStorage.getItem("email");
+    
+    if (email)
+        document.getElementById("email").value = email;
+
+    dialog.showModal();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     getCategorias();
 });

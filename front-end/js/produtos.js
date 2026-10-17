@@ -51,6 +51,11 @@ class Carrinho {
         console.log(`Produto com ID ${produtoId} removido do carrinho.`);
     }
 
+    limpar() {
+        this.produtoQtd = {};
+        this.atualizarCarrinho();
+    }
+
     atualizarCarrinho() {
         var qtd = 0;
 
@@ -94,6 +99,11 @@ function addProduto(produtoId) {
 }
 
 function fazerPedido() {
+    if (!localStorage.getItem("email")) {
+        alert('Você deve fazer o login antes de realizar um pedido.');
+        return;
+    }
+
     if (Object.keys(carrinho.produtoQtd).length === 0) {
         alert('O carrinho está vazio. Adicione produtos antes de fazer o pedido.');
         return;
@@ -112,6 +122,7 @@ function fazerPedido() {
     fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(data) })
         .then(response => response.json())
         .then(data => {
+            carrinho.limpar();
             console.log(data);
         })
         .catch(error => {
