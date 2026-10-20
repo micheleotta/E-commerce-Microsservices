@@ -1,3 +1,7 @@
+"""
+Aplicação web externa simples que simula um provedor de pagamentos
+"""
+
 from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -20,6 +24,7 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory=f"{BASE_DIR}/templates")
 
+# Página de erro genérica para lidar com exceções HTTP
 @app.exception_handler(StarletteHTTPException)
 async def tratar_http_exception(req: Request, exc: StarletteHTTPException):
     titulos = {
@@ -46,6 +51,7 @@ async def tratar_http_exception(req: Request, exc: StarletteHTTPException):
 
 pagamentos = {}
 
+# Processa a solicitação de cobrança do MS Pagamento via REST
 class SolicitacaoPagamento(BaseModel):
     pedido_id: int
     produtos: list
@@ -81,6 +87,8 @@ def pagina_checkout(req: Request, pedido_id: str):
         "valor": pagamento["valor"]
     })
 
+# Abre uma página no navegador onde o usuário clica nos botões "Pagamento Aprovado" ou "Pagamento Recusado".
+# Quando o usuário clicar, faz uma chamada HTTP POST (Webhook) para a URL informada pelo MS Pagamento.
 @app.post("/pagamento/{pedido_id}", response_class=HTMLResponse)
 def processar_pagamento(req: Request, pedido_id: str, action: str = Form(...)):
     pagamento = pagamentos.get(pedido_id)

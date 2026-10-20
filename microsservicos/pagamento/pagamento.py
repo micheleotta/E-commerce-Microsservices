@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 import pika
-import random
 import sys
 import os
 import threading
 import requests
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import pedido, pagamento, publish_event, receive_event, gerar_chaves
@@ -46,6 +45,8 @@ def callback(ch, method, properties, body):
             valor += produto_pedido['preco'] * produto_pedido['quantidade']
 
         try:
+            # Solicita a criação de uma cobrança ao Mock de Pagamento para este
+            # gerar a URL de checkout, passando a sua URL de Webhook para retorno
             response = requests.post(
                 "http://localhost:8100/api/pagamento",
                 json={
@@ -70,7 +71,7 @@ def callback(ch, method, properties, body):
         print(f"Assinatura inválida, evento {evento} descartado!")
 
 
-# expõe um endpoint para o Webhook do Mock de Pagamento
+# Disponibiliza o endpoint HTTP para receber o Webhook do Mock de Pagamento com o status APROVADO ou RECUSADO.
 app = FastAPI(title="Microsserviço de Pagamento")
 
 class WebhookBody(BaseModel):

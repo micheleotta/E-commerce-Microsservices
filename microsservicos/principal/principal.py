@@ -14,8 +14,6 @@ import json
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Dict, Any
 
 app = FastAPI(title="API REST Tradicional (Sem HATEOAS)")
 
@@ -154,12 +152,13 @@ def cancelar_interesse(categoria, email):
 
 async def notificar_cliente(pedido_id, mensagem):
     """
-    Enviar atualizacoes do pedido para o cliente
+    Enviar atualizações do pedido para o cliente
     """
     pedido_id = str(pedido_id)
     if pedido_id in conexoes_sse:
         await conexoes_sse[pedido_id].put(mensagem)
 
+# manter conexões SSE com o frontend para envio de notificações aos clientes sobre o status do(s) seu(s) pedido(s)
 @app.get("/sse/pedido/{pedido_id}")
 async def sse_endpoint(pedido_id, request: Request):
     """Endpoint que mantém a conexão aberta transmitindo eventos."""
@@ -167,12 +166,12 @@ async def sse_endpoint(pedido_id, request: Request):
     conexoes_sse[str(pedido_id)] = fila_atualizacoes
 
     async def evento_gerador():
-        """Gerador assíncrono que envia as atualizacoes do pedido."""
+        """Gerador assíncrono que envia as atualizações do pedido."""
         try:
             yield f"data: {json.dumps({ 'message': '' })}\n\n"
 
             while True:
-                # Espera por novas atualizacoes do pedido
+                # Espera por novas atualizações do pedido
                 mensagem = await fila_atualizacoes.get()
 
                 # O formato padrão do SSE exige o prefixo "data: " e terminar com "\n\n"
@@ -210,7 +209,7 @@ def callback(ch, method, properties, body):
             elif evento == pedido.enviado:
                 status = "pedido enviado"
             elif evento == pedido.estoque_ok:
-                status = "estoque ok"
+                status = "estoque confirmado"
             # produto não disponível em estoque ou pagamento recusado -> pedido.excluido
             elif evento == estoque.indisponivel or evento == pagamento.recusado:
                 motivos = {
@@ -223,6 +222,7 @@ def callback(ch, method, properties, body):
             
             pedidos[pedido_id]["status"] = status
             
+            # notificar o cliente sobre a atualização do status do pedido via SSE
             asyncio.run_coroutine_threadsafe(
                 notificar_cliente(pedido_id, json.dumps({
                     "status": status,

@@ -86,7 +86,7 @@ def callback(ch, method, properties, body):
         print(f"Assinatura inválida, evento {evento} descartado!")
 
 
-# expõe um endpoint para o MS principal consultar produtos disponíveis!
+# expõe um endpoint para o MS principal e promoções consultar produtos disponíveis!
 app = FastAPI(title="Microsserviço de Estoque")
 @app.get("/produtos")
 def consultar_produtos():

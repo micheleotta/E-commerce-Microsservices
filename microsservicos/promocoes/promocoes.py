@@ -26,6 +26,10 @@ def get_emoji(categoria):
         return '🥐'
 
 def send_mail(receiver, categoria, produto, desconto):
+    """
+    Enviar email de interesse por integração com API Externa Resend
+    """
+    
     # email formatado
     caminho = os.path.join(os.path.dirname(__file__), "email.html")
     with open(caminho, "r", encoding="utf-8") as f:
@@ -70,6 +74,7 @@ def gerar_promocoes():
         categoria = produto["categoria"]
         desconto = random.randint(5, 50)
 
+        # gerar notificações aos clientes interessados
         for email in interessados.get(categoria, []):
             send_mail(receiver=email, categoria=categoria, produto=nome, desconto=desconto)
         
@@ -91,8 +96,9 @@ def callback(ch, method, properties, body):
         if interesse:
             if categoria not in interessados:
                 interessados[categoria] = []
-            interessados[categoria].append(email)
-            print(f"{email} registrado a promoções de {categoria}")
+            if email not in interessados[categoria]:
+                interessados[categoria].append(email)
+                print(f"{email} registrado a promoções de {categoria}")
         else:
             if email in interessados[categoria]:
                 interessados[categoria].remove(email)
