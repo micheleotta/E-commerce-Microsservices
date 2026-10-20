@@ -434,3 +434,39 @@ section {
     display: flex;
     flex-direction: column;
 }
+
+.cart-feedback {
+    position: fixed;
+    top: 105px;
+    left: 50%;
+    transform: translate(-50%, -10px);
+
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 12px 22px;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+    opacity: 0;
+    visibility: hidden;
+    z-index: 3000;
+    pointer-events: none;
+
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.cart-feedback.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+@keyframes cart-bounce {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.25); }
+    70% { transform: scale(0.9); }
+}
+
+#cart-btn.cart-bounce {
+    animation: cart-bounce 0.35s ease;
+}

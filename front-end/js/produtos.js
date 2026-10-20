@@ -35,6 +35,7 @@ class Carrinho {
         if (produtos[produtoId]) {
             this.produtoQtd[produtoId] = (this.produtoQtd[produtoId] || 0) + 1;
             this.atualizarCarrinho();
+            mostrarFeedbackCarrinho("Produto adicionado ao carrinho!");
         } else {
             console.error(`Produto com ID ${produtoId} não encontrado.`);
         }
@@ -46,8 +47,8 @@ class Carrinho {
         this.produtoQtd[produtoId] = (this.produtoQtd[produtoId] || 0) - 1;
         if (this.produtoQtd[produtoId] <= 0)
             delete this.produtoQtd[produtoId];
-        
         this.atualizarCarrinho();
+        mostrarFeedbackCarrinho("Produto removido do carrinho!");
         console.log(`Produto com ID ${produtoId} removido do carrinho.`);
     }
 
@@ -219,3 +220,25 @@ document.addEventListener('DOMContentLoaded', function() {
     carrinho = new Carrinho();
     getProdutos();
 });
+
+let feedbackTimeout;
+
+function mostrarFeedbackCarrinho(mensagem) {
+    const feedback = document.getElementById("cart-feedback");
+    const botaoCarrinho = document.getElementById("cart-btn");
+
+    if (!feedback || !botaoCarrinho) return;
+
+    feedback.textContent = mensagem;
+    feedback.classList.add("show");
+
+    clearTimeout(feedbackTimeout);
+    feedbackTimeout = setTimeout(() => {
+        feedback.classList.remove("show");
+    }, 2000);
+
+    // Reinicia a animação do carrinho
+    botaoCarrinho.classList.remove("cart-bounce");
+    void botaoCarrinho.offsetWidth;
+    botaoCarrinho.classList.add("cart-bounce");
+}

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel
 import uvicorn
 import requests
@@ -18,6 +19,30 @@ app.add_middleware(
 )
 
 templates = Jinja2Templates(directory=f"{BASE_DIR}/templates")
+
+@app.exception_handler(StarletteHTTPException)
+async def tratar_http_exception(req: Request, exc: StarletteHTTPException):
+    titulos = {
+        400: "Requisição inválida",
+        401: "Não autorizado",
+        403: "Acesso negado",
+        404: "Página não encontrada",
+        410: "Página indisponível",
+        422: "Dados inválidos",
+        500: "Erro interno do servidor",
+    }
+
+    return templates.TemplateResponse(
+        request=req,
+        name="erro.html",
+        context={
+            "status_code": exc.status_code,
+            "titulo": titulos.get(exc.status_code, "Ocorreu um erro"),
+            "mensagem": str(exc.detail),
+        },
+        status_code=exc.status_code,
+        headers=exc.headers,
+    )
 
 pagamentos = {}
 
