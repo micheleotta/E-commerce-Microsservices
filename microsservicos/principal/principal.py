@@ -227,7 +227,7 @@ def callback(ch, method, properties, body):
                 notificar_cliente(pedido_id, json.dumps({
                     "status": status,
                     "message": f"Atualização do pedido {pedido_id}: {status}",
-                    "link": conteudo.get("pagamento_url") # Temporário
+                    "link": conteudo.get("pagamento_url")
                 })),
                 loop
             )

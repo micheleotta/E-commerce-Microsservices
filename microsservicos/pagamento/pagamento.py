@@ -60,7 +60,6 @@ def callback(ch, method, properties, body):
             response.raise_for_status()
             print(f"\nPedido {pedido_id} -> pagamento iniciado")
 
-            # Temporário
             publish_event(publisher="pagamento", channel=ch, event=pagamento.iniciado, conteudo=response.json())
             print(response.json())
         
