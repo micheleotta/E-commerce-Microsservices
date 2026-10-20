@@ -5,6 +5,7 @@ Aplicação Web completa de um sistema distribuído de *e-commerce* baseado em m
 ## Dependências
 * Instalar o RabbitMQ
 * `pip install -r requirements.txt`
+* Obter `RESEND_API_KEY` e colocá-la em `.env`
 
 ## Para rodar:
 RabbitMQ
