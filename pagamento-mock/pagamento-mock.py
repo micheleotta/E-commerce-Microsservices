@@ -48,21 +48,23 @@ def pagina_checkout(req: Request, pedido_id: str):
     if not pagamento:
         raise HTTPException(status_code=404, detail="Pagamento não encontrado")
     
+    if pagamento.get("finalizado", False):
+        raise HTTPException(status_code=410, detail="Este checkout já foi finalizado.")
+    
     return templates.TemplateResponse(request=req, name="checkout.html", context={
         "pedido_id": pedido_id,
         "valor": pagamento["valor"]
     })
 
 @app.post("/pagamento/{pedido_id}", response_class=HTMLResponse)
-def processar_pagamento(
-    req: Request,
-    pedido_id: str, 
-    action: str = Form(...)
-):
+def processar_pagamento(req: Request, pedido_id: str, action: str = Form(...)):
     pagamento = pagamentos.get(pedido_id)
 
     if not pagamento:
         raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+
+    if pagamento.get("finalizado", False):
+        raise HTTPException(status_code=410, detail="Este pagamento já foi processado.")
 
     if action == "aprovar":
         status = "aprovado"
@@ -70,6 +72,7 @@ def processar_pagamento(
     else:
         status = "recusado"
         aprovado = False
+    pagamentos[pedido_id]["finalizado"] = True
 
     try:
         response = requests.post(

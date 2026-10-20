@@ -59,7 +59,7 @@ class Carrinho {
     atualizarCarrinho() {
         var qtd = 0;
 
-        this.carrinhoContainer.innerHTML = '';        
+        this.carrinhoContainer.innerHTML = '';
         Object.entries(carrinho.produtoQtd).map(([id, quantidade]) => {
             const produto = produtos[id];
             if (produto) {
@@ -113,19 +113,19 @@ function setupSSE(pedido_id) {
         var container = document.getElementById("pedido-container");
 
         if (data.link)
-            container.innerHTML += `
-                <a href=${data.link} target="_blank" class="pedido-content">
+            container.insertAdjacentHTML('afterbegin', `
+                <a href="${data.link}" target="_blank" class="pedido-content">
                     <span class="material-symbols-outlined">notification_important</span>
                     <p>${data.message}</p>
                 </a>
-            `;
+            `);
         else
-            container.innerHTML += `
+            container.insertAdjacentHTML('afterbegin', `
                 <div class="pedido-content">
                     <span class="material-symbols-outlined">notification_important</span>
                     <p>${data.message}</p>
                 </div>
-            `;
+            `);
 
         var qtd = parseInt(btn.getAttribute("data-count")) || 0;
         btn.setAttribute("data-count", qtd += 1);

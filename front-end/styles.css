@@ -31,6 +31,22 @@ button[data-count]::after {
     font-weight: 700;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+}
+
+.logo-container h1 {
+    margin: 0;
+}
+
 header {
     position: fixed;
     top: 10px;
@@ -63,7 +79,7 @@ main {
 }
 
 h1 {
-    font-family: "Mali", cursive;
+    font-family: "Poppins", sans-serif;
     font-size: 2rem;
     font-weight: 500;
     color: var(--secondary-color);

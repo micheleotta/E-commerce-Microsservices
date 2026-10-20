@@ -13,11 +13,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import interesse, receive_event, gerar_chaves
 
 interessados = {}
-interessados = {
-    'doce': ['michfacul@gmail.com'],
-    'salgado': ['michfacul@gmail.com'],
-    'pao': ['michfacul@gmail.com']
-    }
 
 load_dotenv()
 resend.api_key = os.environ["RESEND_API_KEY"] # obter chave API do arquivo .env

@@ -169,7 +169,7 @@ async def sse_endpoint(pedido_id, request: Request):
     async def evento_gerador():
         """Gerador assíncrono que envia as atualizacoes do pedido."""
         try:
-            yield f"data: {json.dumps({ "message": "" })}\n\n"
+            yield f"data: {json.dumps({ 'message': '' })}\n\n"
 
             while True:
                 # Espera por novas atualizacoes do pedido
