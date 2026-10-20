@@ -11,7 +11,7 @@ RabbitMQ
 * (Linux) `sudo systemctl start docker`
 * `docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4-management`
 
-Frontend -> acessar via http://localhost:5500
+Frontend -> acessar via `http://localhost:5500`
 * (front-end) `python -m http.server 5500`
 
 Backend
@@ -23,4 +23,4 @@ Backend
 * `python pagamento-mock/pagamento-mock.py`
 
 ## Exemplificação
-<img width="726" height="601" alt="image" src="https://github.com/user-attachments/assets/f5b03569-a6b2-48ea-b54e-55d6a993587b" />
+<img width="726" height="601" alt="image" src="https://github.com/user-attachments/assets/031b0206-9330-4db1-b035-e0138da18efb" />
